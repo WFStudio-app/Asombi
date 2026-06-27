@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+# Wizzor - Package Manager for Asombi OS
+# Works on Android/Termux ARM64
+
+import sys
+import os
+
+VERSION = "0.1.0"
+WIZ_DIR = os.path.expanduser("~/.wizzor")
+CORE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "wizzor", "core")
+
+sys.path.insert(0, CORE_DIR)
+
+HELP = f"""
+  ██╗    ██╗██╗███████╗███████╗ ██████╗ ██████╗
+  ██║    ██║██║╚══███╔╝╚══███╔╝██╔═══██╗██╔══██╗
+  ██║ █╗ ██║██║  ███╔╝   ███╔╝ ██║   ██║██████╔╝
+  ██║███╗██║██║ ███╔╝   ███╔╝  ██║   ██║██╔══██╗
+  ╚███╔███╔╝██║███████╗███████╗╚██████╔╝██║  ██║
+   ╚══╝╚══╝ ╚═╝╚══════╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝
+  Package Manager for Asombi OS  v{VERSION}
+
+Usage:
+  wiz install <package>     Install a package
+  wiz remove  <package>     Remove a package
+  wiz update  [package]     Update package(s)
+  wiz search  <query>       Search for packages
+  wiz list                  List installed packages
+  wiz info    <package>     Show package info
+  wiz repo    add <url>     Add a repository
+  wiz repo    remove <url>  Remove a repository
+  wiz repo    list          List repositories
+  wiz clean                 Clear cache
+  wiz version               Show version
+"""
+
+def main():
+    args = sys.argv[1:]
+
+    if not args or args[0] in ("-h", "--help", "help"):
+        print(HELP)
+        return
+
+    cmd = args[0]
+    rest = args[1:]
+
+    if cmd == "version":
+        print(f"Wizzor v{VERSION} | Asombi OS | ARM64/Android")
+        return
+
+    if cmd == "install":
+        from install import cmd_install
+        cmd_install(rest)
+
+    elif cmd == "remove":
+        from remove import cmd_remove
+        cmd_remove(rest)
+
+    elif cmd == "update":
+        from update import cmd_update
+        cmd_update(rest)
+
+    elif cmd == "search":
+        from search import cmd_search
+        cmd_search(rest)
+
+    elif cmd == "list":
+        from list_pkg import cmd_list
+        cmd_list(rest)
+
+    elif cmd == "info":
+        from info import cmd_info
+        cmd_info(rest)
+
+    elif cmd == "repo":
+        from repo import cmd_repo
+        cmd_repo(rest)
+
+    elif cmd == "clean":
+        from clean import cmd_clean
+        cmd_clean()
+
+    else:
+        print(f"[wiz] Unknown command: '{cmd}'")
+        print("Run 'wiz help' for usage.")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()

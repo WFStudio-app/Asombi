@@ -1,0 +1,16 @@
+{
+  "repo": "Asombi Official",
+  "maintainer": "WFStudio-app",
+  "updated": "2026-06-28",
+  "packages": {
+    "hello-wiz": {
+      "version": "1.0.0",
+      "description": "Test package for Wizzor",
+      "url": "https://raw.githubusercontent.com/WFStudio-app/Asombi/main/packages/hello-wiz-1.0.0.sh",
+      "size": "1 KB",
+      "sha256": "",
+      "depends": [],
+      "license": "MIT"
+    }
+  }
+}
