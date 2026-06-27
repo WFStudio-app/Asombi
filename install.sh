@@ -39,9 +39,11 @@ else
     git clone "$REPO" "$INSTALL_DIR/Asombi"
 fi
 
-# Создание симлинка
+# Создание симлинков
 ln -sf "$INSTALL_DIR/Asombi/bin/wiz" "$BIN_DIR/wiz"
+ln -sf "$INSTALL_DIR/Asombi/bin/os"  "$BIN_DIR/os"
 chmod +x "$INSTALL_DIR/Asombi/bin/wiz"
+chmod +x "$INSTALL_DIR/Asombi/bin/os"
 
 echo ""
 echo "[✓] Wizzor installed successfully!"

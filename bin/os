@@ -1,0 +1,189 @@
+#!/usr/bin/env python3
+# Asombi OS - Entry Point
+# Usage: os login <instance>
+
+import sys
+import os
+import json
+import time
+
+VERSION = "0.1.0"
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.expanduser("~/.asombi")
+INSTANCES_FILE = os.path.join(DATA_DIR, "instances.json")
+
+COLORS = {
+    "green":  "\033[92m",
+    "red":    "\033[91m",
+    "yellow": "\033[93m",
+    "blue":   "\033[94m",
+    "cyan":   "\033[96m",
+    "magenta":"\033[95m",
+    "reset":  "\033[0m",
+    "bold":   "\033[1m",
+    "dim":    "\033[2m",
+}
+
+def c(color, text):
+    return f"{COLORS.get(color,'')}{text}{COLORS['reset']}"
+
+BANNER = f"""
+{c('cyan', '  ░█████╗░░██████╗░█████╗░███╗░░░███╗██████╗░██╗')}
+{c('cyan', '  ██╔══██╗██╔════╝██╔══██╗████╗░████║██╔══██╗██║')}
+{c('cyan', '  ███████║╚█████╗░██║░░██║██╔████╔██║██████╦╝██║')}
+{c('cyan', '  ██╔══██║░╚═══██╗██║░░██║██║╚██╔╝██║██╔══██╗██║')}
+{c('cyan', '  ██║░░██║██████╔╝╚█████╔╝██║░╚═╝░██║██████╦╝██║')}
+{c('cyan', '  ╚═╝░░╚═╝╚═════╝░╚════╝░╚═╝░░░╚═╝╚═════╝░╚═╝')}
+{c('dim',  f'  Asombi OS v{VERSION} | Powered by Wizzor')}
+"""
+
+def load_instances():
+    if not os.path.exists(INSTANCES_FILE):
+        return {}
+    with open(INSTANCES_FILE) as f:
+        return json.load(f)
+
+def save_instances(data):
+    os.makedirs(DATA_DIR, exist_ok=True)
+    with open(INSTANCES_FILE, "w") as f:
+        json.dump(data, f, indent=2)
+
+def create_instance(name):
+    instances = load_instances()
+    if name in instances:
+        return instances[name]
+    instance = {
+        "name": name,
+        "created": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "home": os.path.join(DATA_DIR, "instances", name),
+    }
+    instances[name] = instance
+    save_instances(instances)
+    os.makedirs(instance["home"], exist_ok=True)
+    return instance
+
+def boot_sequence(instance_name):
+    """Анимация загрузки при входе"""
+    steps = [
+        "Initializing Asombi kernel",
+        "Mounting virtual filesystem",
+        "Loading Wizzor daemon",
+        "Starting session",
+    ]
+    for step in steps:
+        sys.stdout.write(f"  {c('dim', '[ .... ]')} {step}")
+        sys.stdout.flush()
+        time.sleep(0.3)
+        sys.stdout.write(f"\r  {c('green', '[  OK  ]')} {step}\n")
+        sys.stdout.flush()
+
+def run_shell(instance):
+    """Запуск интерактивной оболочки Asombi"""
+    sys.path.insert(0, os.path.join(ROOT_DIR, "wizzor", "core"))
+    
+    name = instance["name"]
+    home = instance["home"]
+    cwd = home
+
+    print(f"\n  {c('green', '✓')} Logged in as {c('cyan', name)}")
+    print(f"  {c('dim', 'Type \"help\" for available commands, \"exit\" to quit')}\n")
+
+    while True:
+        try:
+            prompt = f"{c('cyan', 'asombi')}@{c('green', name)}:{c('yellow', '~')}$ "
+            line = input(prompt).strip()
+        except (EOFError, KeyboardInterrupt):
+            print(f"\n\n  {c('yellow', 'Session ended. Goodbye!')}\n")
+            break
+
+        if not line:
+            continue
+
+        parts = line.split()
+        cmd = parts[0]
+        args = parts[1:]
+
+        if cmd in ("exit", "logout", "quit"):
+            print(f"\n  {c('yellow', 'Logging out...')} Goodbye, {c('cyan', name)}!\n")
+            break
+
+        elif cmd == "wiz":
+            # Передаём команду в Wizzor
+            wiz_path = os.path.join(ROOT_DIR, "bin", "wiz")
+            os.system(f"python3 {wiz_path} {' '.join(args)}")
+
+        elif cmd == "help":
+            print(f"""
+  {c('bold', 'Asombi OS Commands:')}
+
+  {c('cyan', 'wiz <command>')}     Run Wizzor package manager
+  {c('cyan', 'help')}              Show this help
+  {c('cyan', 'info')}              Show system info
+  {c('cyan', 'clear')}             Clear screen
+  {c('cyan', 'exit')}              Exit Asombi session
+""")
+
+        elif cmd == "info":
+            print(f"""
+  {c('bold', 'System Info:')}
+  Instance:  {c('cyan', name)}
+  Home:      {c('dim', home)}
+  OS:        Asombi v{VERSION}
+  Kernel:    Wizzor v0.1.0
+  Session:   {c('green', 'Active')}
+""")
+
+        elif cmd == "clear":
+            os.system("clear")
+            print(BANNER)
+
+        else:
+            # Пробуем запустить как системную команду
+            ret = os.system(line)
+            if ret != 0 and ret != 32512:
+                pass  # команда выполнена с ошибкой, OS уже вывела сообщение
+
+def main():
+    args = sys.argv[1:]
+
+    if not args:
+        print(BANNER)
+        print(f"  Usage: os login <instance-name>\n")
+        print(f"  Example: {c('cyan', 'os login asombi-1')}\n")
+        return
+
+    if args[0] == "login":
+        if len(args) < 2:
+            print(f"  {c('red', '[✗]')} Usage: os login <instance-name>")
+            sys.exit(1)
+
+        instance_name = args[1]
+
+        print(BANNER)
+        print(f"  {c('bold', 'Booting instance:')} {c('cyan', instance_name)}\n")
+
+        instance = create_instance(instance_name)
+        boot_sequence(instance_name)
+        run_shell(instance)
+
+    elif args[0] == "instances":
+        instances = load_instances()
+        if not instances:
+            print(f"  {c('yellow', 'No instances found.')}")
+            print(f"  Create one: {c('cyan', 'os login asombi-1')}\n")
+        else:
+            print(f"\n  {c('bold', 'Available instances:')}\n")
+            for name, meta in instances.items():
+                print(f"  {c('cyan', name):<20} created: {c('dim', meta.get('created','?'))}")
+            print()
+
+    elif args[0] == "version":
+        print(f"  Asombi OS v{VERSION}")
+
+    else:
+        print(f"  {c('red', '[✗]')} Unknown command: '{args[0]}'")
+        print(f"  Usage: os login <instance-name>")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
