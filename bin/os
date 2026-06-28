@@ -11,7 +11,7 @@ import urllib.request
 import tarfile
 import shutil
 
-VERSION = "0.1.0"
+VERSION = "0.1.00"
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.expanduser("~/.asombi")
 INSTANCES_DIR = os.path.join(DATA_DIR, "instances")

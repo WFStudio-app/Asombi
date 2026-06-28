@@ -149,6 +149,20 @@ Asombi/
 
 ---
 
+
+## Versioning
+
+Asombi uses a custom versioning system:
+
+| Version | Type | Description |
+|---------|------|-------------|
+| `0.1.00` | Release | New release milestone |
+| `0.1.01` | Mini update | Bug fixes, small tweaks |
+| `0.1.10` | Major update | New features added |
+| `0.2.00` | New release | Significant new milestone |
+
+Current version: **0.1.00**
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md)

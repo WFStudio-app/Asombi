@@ -5,7 +5,7 @@
 import sys
 import os
 
-VERSION = "0.1.0"
+VERSION = "0.1.00"
 WIZ_DIR = os.path.expanduser("~/.wizzor")
 CORE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "wizzor", "core")
 
