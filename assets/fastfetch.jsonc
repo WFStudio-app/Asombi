@@ -1,0 +1,79 @@
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  "logo": {
+    "source": "~/.asombi/logo.txt",
+    "type": "file",
+    "color": {
+      "1": "cyan",
+      "2": "blue"
+    },
+    "padding": {
+      "top": 1,
+      "left": 2,
+      "right": 4
+    }
+  },
+  "display": {
+    "separator": "  →  ",
+    "color": "cyan"
+  },
+  "modules": [
+    {
+      "type": "title",
+      "format": "\u001b[96masombi\u001b[0m@\u001b[92masombi-root\u001b[0m"
+    },
+    "separator",
+    {
+      "type": "os",
+      "key": "OS",
+      "keyColor": "cyan",
+      "format": "Asombi OS v0.1.0 (Alpine Linux {version})"
+    },
+    {
+      "type": "kernel",
+      "key": "Kernel",
+      "keyColor": "cyan"
+    },
+    {
+      "type": "uptime",
+      "key": "Uptime",
+      "keyColor": "cyan"
+    },
+    {
+      "type": "shell",
+      "key": "Shell",
+      "keyColor": "cyan"
+    },
+    {
+      "type": "cpu",
+      "key": "CPU",
+      "keyColor": "cyan"
+    },
+    {
+      "type": "memory",
+      "key": "Memory",
+      "keyColor": "cyan"
+    },
+    {
+      "type": "disk",
+      "key": "Disk",
+      "keyColor": "cyan"
+    },
+    {
+      "type": "localip",
+      "key": "IP",
+      "keyColor": "cyan"
+    },
+    {
+      "type": "packages",
+      "key": "Packages",
+      "keyColor": "cyan",
+      "format": "{apk} (apk)  {wizzor} (wiz)"
+    },
+    "separator",
+    {
+      "type": "colors",
+      "symbol": "circle"
+    }
+  ]
+}
