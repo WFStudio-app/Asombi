@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Lint Wizzor
+        run: |
+          pip install flake8
+          flake8 wizzor/core/ bin/ --max-line-length=120 --ignore=E501,W503
+      - name: Shellcheck
+        run: |
+          sudo apt-get install -y shellcheck -q
+          shellcheck install.sh assets/setup-fastfetch.sh

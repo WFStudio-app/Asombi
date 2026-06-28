@@ -1,61 +1,3 @@
-```
-                                             ****#######***                                         
-                                     *###########################**                                 
-                                **#####################################*                            
-                            *#############################################**                        
-                         **##################################################**                     
-                       *#######################################################**                   
-                    *#############################################################**                
-                  *################################################################**               
-                ##################################################################*=                
-               *################################################################*+                  
-             *################################################################*+                    
-            *##################################***###########################+                      
-           *##############################**=              =**#############+                        
-          ############################*+                        +*#######*=                         
-         ##########################*+                              +*##*=                           
-        *########################+                                                                  
-       ---*####################*                                                                    
-      ------+*###############*+                                                                     
-     ---------=*############*                                                                       
-     ------------+#########*                                                                        
-    ---------------+*#####*                                                                         
-   ------------------=*##*                                                                          
-   ---------------------=                           ++++++++**+++++++++++++++++++++++++++++*+++++   
-   ---------------------:                          ++*+++++++++++++++++++++++++++++++++++++++++++++ 
-   ---------------------                           ++*+++++++++++++++++++++++++++++++++++++++++++++ 
-  ----------------------                           +**+++++++++++++++++++++++++++++++++++++++++++++ 
-  ---------------------:                           +*++++++++++++++++++++++++++++++++++++++++++++++ 
-  ---------------------:                           +*+++++++++++++++++++++++++++++++++++++++++++++++
-  ---------------------:                           +*+++++++++++++++++++++++++++++++++++++++++++++++
-  ----------------------                           ++++++++++++++++++++++++++++++++++++++++++++++++ 
-   ---------------------                           ++++++++++++++++++++++++++++++++++++++++++++++++ 
-   ---------------------:                          +**+++++++++++++++++++++++++++++++++++++++++++++ 
-   ----------------------                          ++*+++++++++++++++++++++++++++++++++++++++++++++ 
-   -------------------=+++                           ++++++++++++++++++++++++++++++++++++++++++++++ 
-    ----------------++++++=                                                  ++++++++++++++++++++++ 
-    --------------++++++++++                                                 +++++++++++++++++++++  
-     ----------=+++++++++++++                                               +*++++++++++++++++++++  
-      -------+++++++++++++++++                                             ++++++++++++++++++++++   
-      ----=+++++++++++++++++++++                                         +*++++++++++++++++++++++   
-       -+++++++++++++++++++++++++=                                     ++*+++++++++++++++++++*++    
-        ++++++++++++++++++++++++++++                                 ++*+++++++++++++++++++++++     
-         ++++++++++++++++++++++++++++++                           +++++++++++++++++++++++++*++      
-           +++++++++++++++++++++++++++++++++                  +++++++++++++++++++++++++++++++       
-            ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++        
-             +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++          
-              +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++           
-                ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++            
-                  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++              
-                    ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++                
-                      ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++                  
-                         ++++++++++++++++++++++++++++++++++++++++++++++++++++++                     
-                           +++++++++++++++++++++++++++++++++++++++++++++++++=                       
-                               =+++++++++++++++++++++++++++++++++++++++++                           
-                                   =+++++++++++++++++++++++++++++++==                               
-                                          =++++++++++++++++++=-                                     
-```
-
 <h1 align="center">ASOMBI OS</h1>
 <p align="center">
   A real Linux operating environment for Android · Built on Alpine Linux · ARM64 native
@@ -65,6 +7,7 @@
   <img src="https://img.shields.io/badge/Arch-ARM64%20%2F%20x86__64-green?style=flat-square"/>
   <img src="https://img.shields.io/badge/Package%20Manager-Wizzor-cyan?style=flat-square"/>
   <img src="https://img.shields.io/badge/Platform-Termux%20%2F%20Android-orange?style=flat-square&logo=android"/>
+  <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square"/>
 </p>
 
 ---
@@ -84,8 +27,8 @@ With real `/bin`, `/etc`, `/usr`, full Alpine package repos (`apk`) and Wizzor (
 ## Requirements
 
 - **Android** device (ARM64 recommended, x86_64 also supported)
-- **Termux** — [Download from F-Droid](https://f-droid.org/packages/com.termux/) (not Play Store)
-- Internet connection for first setup (~30 MB download)
+- **Termux** — [Download from F-Droid](https://f-droid.org/packages/com.termux/)
+- Internet connection for first setup (~30 MB)
 
 ---
 
@@ -93,19 +36,18 @@ With real `/bin`, `/etc`, `/usr`, full Alpine package repos (`apk`) and Wizzor (
 
 ### Step 1 — Install Termux
 
-Download and install Termux from F-Droid:
+Download Termux from F-Droid (not Play Store):
 ```
 https://f-droid.org/packages/com.termux/
 ```
 
-### Step 2 — Update Termux packages
+### Step 2 — Update packages
 
-Open Termux and run:
 ```bash
 pkg update && pkg upgrade -y
 ```
 
-### Step 3 — Install Git and Python
+### Step 3 — Install dependencies
 
 ```bash
 pkg install git python -y
@@ -118,63 +60,38 @@ git clone https://github.com/WFStudio-app/Asombi.git
 cd Asombi
 ```
 
-### Step 5 — Run the installer
+### Step 5 — Run installer
 
 ```bash
 bash install.sh
 ```
 
-This will:
-- Install `proot` if not already present
-- Create symlinks so `os` and `wiz` are available system-wide
-
 ---
 
 ## First Boot
-
-Log into Asombi for the first time:
 
 ```bash
 os login asombi-1
 ```
 
-**On first boot Asombi will:**
-1. Download Alpine Linux 3.19 rootfs for your architecture (~8 MB)
-2. Set up the environment, prompt, and Wizzor inside Alpine
-3. Configure fastfetch with your Asombi logo
-4. Drop you into the live shell
-
-```
-  [  OK  ] proot found
-  [  ..  ] Downloading Alpine Linux 3.19 (aarch64)...
-  [██████████████████░░] 92%
-  [  OK  ] Download complete
-  [  OK  ] Alpine rootfs ready
-  [  OK  ] Wizzor installed inside Alpine
-  [  OK  ] Instance 'asombi-1' created successfully!
-
-  ✓ Entering Asombi OS — asombi-1
-
-asombi@asombi-root:~#
-```
+On first boot Asombi will download Alpine Linux, configure the environment, install Wizzor, and drop you into a live shell.
 
 ---
 
 ## Usage
 
-### OS commands (from Termux)
+### From Termux
 
 ```bash
-os login asombi-1       # Start (or create) an instance
+os login <name>         # Start or create an instance
 os instances            # List all instances
-os remove asombi-1      # Delete an instance
-os version              # Show OS version
+os remove <name>        # Delete an instance
+os version              # Show version
 ```
 
-### Inside Asombi shell
+### Inside Asombi
 
 ```bash
-# Wizzor package manager
 wiz install <package>   # Install a package
 wiz remove  <package>   # Remove a package
 wiz update              # Update all packages
@@ -182,45 +99,24 @@ wiz search  <query>     # Search packages
 wiz list                # List installed packages
 wiz info    <package>   # Show package info
 wiz repo add <url>      # Add a repository
-wiz clean               # Clear download cache
+wiz clean               # Clear cache
 
-# Alpine native package manager (also available)
-apk add <package>
-apk search <query>
-
-# Any standard Linux commands work
-ls / cat / grep / curl / ssh / python3 / etc.
+apk add <package>       # Alpine native package manager
 ```
-
----
-
-## Multiple Instances
-
-You can run multiple isolated Asombi environments:
-
-```bash
-os login asombi-1    # First environment
-os login asombi-2    # Second environment (separate rootfs)
-os login work        # Name it anything you want
-```
-
-Each instance has its own filesystem, packages, and files.
 
 ---
 
 ## Wizzor Repository Format
 
-To publish packages for Wizzor, host a JSON file anywhere (GitHub raw, your server):
-
 ```json
 {
-  "repo": "My Repo Name",
-  "maintainer": "your-name",
+  "repo": "My Repo",
+  "maintainer": "you",
   "packages": {
     "my-tool": {
       "version": "1.0.0",
-      "description": "What this tool does",
-      "url": "https://example.com/my-tool-1.0.0.tar.gz",
+      "description": "What it does",
+      "url": "https://example.com/my-tool.tar.gz",
       "sha256": "abc123...",
       "size": "200 KB",
       "depends": [],
@@ -230,12 +126,6 @@ To publish packages for Wizzor, host a JSON file anywhere (GitHub raw, your serv
 }
 ```
 
-Add it inside Asombi:
-```bash
-wiz repo add https://example.com/my-repo/index.json
-wiz install my-tool
-```
-
 ---
 
 ## Project Structure
@@ -243,30 +133,38 @@ wiz install my-tool
 ```
 Asombi/
 ├── bin/
-│   ├── os               ← Entry point: os login <instance>
-│   └── wiz              ← Wizzor package manager
-├── wizzor/
-│   └── core/
-│       ├── utils.py     ← Shared utilities
-│       ├── install.py   ← wiz install
-│       ├── remove.py    ← wiz remove
-│       ├── update.py    ← wiz update
-│       ├── search.py    ← wiz search
-│       ├── list_pkg.py  ← wiz list
-│       ├── info.py      ← wiz info
-│       ├── repo.py      ← wiz repo
-│       └── clean.py     ← wiz clean
-├── packages/
-│   └── index.json       ← Official package index
-├── assets/
-│   ├── logo.txt         ← ASCII logo (used by fastfetch)
-│   └── fastfetch.jsonc  ← Fastfetch config
-├── install.sh           ← One-command installer
-└── README.md
+│   ├── os               ← Entry point
+│   └── wiz              ← Package manager
+├── wizzor/core/         ← Wizzor modules
+├── packages/index.json  ← Official package index
+├── assets/              ← Logo, fastfetch config
+├── docs/                ← Documentation
+├── .github/             ← Issue templates, workflows
+├── LICENSE              ← MIT License
+├── CONTRIBUTING.md      ← Contribution guide
+├── CHANGELOG.md         ← Version history
+├── SECURITY.md          ← Security policy
+└── install.sh           ← One-command installer
 ```
+
+---
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md)
+
+## Security
+
+See [SECURITY.md](SECURITY.md)
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
 ## License
 
-MIT © [WFStudio-app](https://github.com/WFStudio-app)
+MIT License — see [LICENSE](LICENSE)
+
+© WFWorld
