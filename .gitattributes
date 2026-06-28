@@ -1,0 +1,25 @@
+# Normalize line endings
+* text=auto eol=lf
+
+# Shell scripts — always LF
+*.sh text eol=lf
+bin/wiz text eol=lf
+bin/os text eol=lf
+
+# Python
+*.py text eol=lf
+
+# JSON / YAML
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Markdown
+*.md text eol=lf
+
+# Binary
+*.tar.gz binary
+*.tar.xz binary
+*.zip binary
+*.png binary
+*.jpg binary
