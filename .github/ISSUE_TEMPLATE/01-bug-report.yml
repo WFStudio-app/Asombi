@@ -1,0 +1,56 @@
+name: "Bug Report"
+description: "Report a bug in Asombi OS or Wizzor"
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please search existing issues before opening a new one.
+        For package issues use the Wizzor repository, not this one.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Problem description
+      description: A clear description of the bug. Attach logs, screenshots if possible.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Exact commands to reproduce the issue.
+      placeholder: |
+        1. Run 'os login asombi-1'
+        2. Run 'wiz install ...'
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: sysinfo
+    attributes:
+      label: System information
+      value: |
+        - Asombi version (`os version`):
+        - Android version:
+        - Device architecture (`uname -m`):
+        - Termux version:
+        - Device model:
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / error output
+      render: shell
