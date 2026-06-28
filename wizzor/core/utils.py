@@ -24,17 +24,21 @@ COLORS = {
     "bold":   "\033[1m",
 }
 
+
 def c(color, text):
     return f"{COLORS.get(color,'')}{text}{COLORS['reset']}"
+
 
 def ok(msg):    print(c("green",  f"[✓] {msg}"))
 def err(msg):   print(c("red",    f"[✗] {msg}"))
 def info(msg):  print(c("cyan",   f"[i] {msg}"))
 def warn(msg):  print(c("yellow", f"[!] {msg}"))
 
+
 def ensure_dirs():
     os.makedirs(WIZ_DIR, exist_ok=True)
     os.makedirs(CACHE_DIR, exist_ok=True)
+
 
 def load_installed():
     if not os.path.exists(INSTALLED_DB):
@@ -42,10 +46,12 @@ def load_installed():
     with open(INSTALLED_DB) as f:
         return json.load(f)
 
+
 def save_installed(db):
     ensure_dirs()
     with open(INSTALLED_DB, "w") as f:
         json.dump(db, f, indent=2)
+
 
 def load_sources():
     if not os.path.exists(SOURCES_FILE):
@@ -54,12 +60,14 @@ def load_sources():
         lines = [l.strip() for l in f if l.strip() and not l.startswith("#")]
     return lines or list(DEFAULT_REPOS)
 
+
 def save_sources(sources):
     ensure_dirs()
     with open(SOURCES_FILE, "w") as f:
         f.write("# Wizzor sources.list\n")
         for s in sources:
             f.write(s + "\n")
+
 
 def fetch_json(url):
     try:
@@ -72,6 +80,7 @@ def fetch_json(url):
         err(f"Failed to fetch {url}: {e}")
     return None
 
+
 def download_file(url, dest):
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "Wizzor/0.1"})
@@ -82,12 +91,14 @@ def download_file(url, dest):
         err(f"Download failed: {e}")
         return False
 
+
 def sha256(path):
     h = hashlib.sha256()
     with open(path, "rb") as f:
         for chunk in iter(lambda: f.read(8192), b""):
             h.update(chunk)
     return h.hexdigest()
+
 
 def fetch_all_packages():
     """Загружает индекс пакетов из всех источников."""
