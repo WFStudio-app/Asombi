@@ -8,62 +8,43 @@
   <img src="https://img.shields.io/badge/Package%20Manager-Wizzor-cyan?style=flat-square"/>
   <img src="https://img.shields.io/badge/Platform-Termux%20%2F%20Android-orange?style=flat-square&logo=android"/>
   <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square"/>
+  <img src="https://img.shields.io/badge/Version-0.1.01-purple?style=flat-square"/>
 </p>
 
 ---
 
 ## What is Asombi?
 
-Asombi is a real Linux environment that runs on top of Android via Termux — no root required on your device. It uses `proot` to boot a genuine Alpine Linux rootfs, with a custom shell, custom prompt, and **Wizzor** — its own package manager.
+Asombi is a real Linux environment that runs on top of Android via Termux — no root required.
+It uses `proot` to boot a genuine Alpine Linux rootfs with a custom shell, custom prompt,
+and **Wizzor** — its own package manager.
 
-When you log in you get a real shell:
 ```
 asombi@asombi-root:~#
 ```
-With real `/bin`, `/etc`, `/usr`, full Alpine package repos (`apk`) and Wizzor (`wiz`) side by side.
 
 ---
 
 ## Requirements
 
-- **Android** device (ARM64 recommended, x86_64 also supported)
-- **Termux** — [Download from F-Droid](https://f-droid.org/packages/com.termux/)
-- Internet connection for first setup (~30 MB)
+- **Android** 7.0+ (ARM64 recommended, x86_64 supported)
+- **Termux** — [Download from F-Droid](https://f-droid.org/packages/com.termux/) *(not Play Store)*
+- Internet connection (~30 MB on first boot)
 
 ---
 
 ## Installation
 
-### Step 1 — Install Termux
-
-Download Termux from F-Droid (not Play Store):
-```
-https://f-droid.org/packages/com.termux/
-```
-
-### Step 2 — Update packages
-
 ```bash
+# 1. Update Termux
 pkg update && pkg upgrade -y
-```
 
-### Step 3 — Install dependencies
-
-```bash
+# 2. Install dependencies
 pkg install git python -y
-```
 
-### Step 4 — Clone Asombi
-
-```bash
+# 3. Clone and install
 git clone https://github.com/WFStudio-app/Asombi.git
-cd Asombi
-```
-
-### Step 5 — Run installer
-
-```bash
-bash install.sh
+cd Asombi && bash install.sh
 ```
 
 ---
@@ -74,7 +55,8 @@ bash install.sh
 os login asombi-1
 ```
 
-On first boot Asombi will download Alpine Linux, configure the environment, install Wizzor, and drop you into a live shell.
+On first boot Asombi downloads Alpine Linux, sets up the environment,
+installs Wizzor, and drops you into a live shell.
 
 ---
 
@@ -101,30 +83,33 @@ wiz info    <package>   # Show package info
 wiz repo add <url>      # Add a repository
 wiz clean               # Clear cache
 
-apk add <package>       # Alpine native package manager
+apk add <package>       # Alpine native packages (also available)
 ```
 
 ---
 
-## Wizzor Repository Format
+## Versioning
 
-```json
-{
-  "repo": "My Repo",
-  "maintainer": "you",
-  "packages": {
-    "my-tool": {
-      "version": "1.0.0",
-      "description": "What it does",
-      "url": "https://example.com/my-tool.tar.gz",
-      "sha256": "abc123...",
-      "size": "200 KB",
-      "depends": [],
-      "license": "MIT"
-    }
-  }
-}
-```
+| Version | Type | Description |
+|---------|------|-------------|
+| `0.1.01` | Mini update | Bug fixes, small tweaks |
+| `0.1.10` | Major update | New features |
+| `0.2.00` | New release | Significant milestone |
+
+Current version: **0.1.01**
+
+---
+
+## Documentation
+
+| Doc | Description |
+|-----|-------------|
+| [docs/faq.md](docs/faq.md) | Frequently asked questions |
+| [docs/troubleshooting.md](docs/troubleshooting.md) | Common issues and fixes |
+| [docs/wizzor.md](docs/wizzor.md) | Wizzor command reference |
+| [docs/packages.md](docs/packages.md) | Creating and publishing packages |
+| [docs/instances.md](docs/instances.md) | Managing instances |
+| [docs/architecture.md](docs/architecture.md) | System architecture |
 
 ---
 
@@ -139,29 +124,17 @@ Asombi/
 ├── packages/index.json  ← Official package index
 ├── assets/              ← Logo, fastfetch config
 ├── docs/                ← Documentation
-├── .github/             ← Issue templates, workflows
-├── LICENSE              ← MIT License
-├── CONTRIBUTING.md      ← Contribution guide
-├── CHANGELOG.md         ← Version history
-├── SECURITY.md          ← Security policy
-└── install.sh           ← One-command installer
+├── .github/             ← CI, issue templates, PR template
+├── install.sh           ← Installer
+├── uninstall.sh         ← Uninstaller
+├── LICENSE              ← MIT
+├── CODE_OF_CONDUCT.md
+├── CONTRIBUTING.md
+├── CHANGELOG.md
+└── SECURITY.md
 ```
 
 ---
-
-
-## Versioning
-
-Asombi uses a custom versioning system:
-
-| Version | Type | Description |
-|---------|------|-------------|
-| `0.1.00` | Release | New release milestone |
-| `0.1.01` | Mini update | Bug fixes, small tweaks |
-| `0.1.10` | Major update | New features added |
-| `0.2.00` | New release | Significant new milestone |
-
-Current version: **0.1.00**
 
 ## Contributing
 
@@ -171,9 +144,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 See [SECURITY.md](SECURITY.md)
 
-## Changelog
+## Code of Conduct
 
-See [CHANGELOG.md](CHANGELOG.md)
+See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
 
 ---
 
