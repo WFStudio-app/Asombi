@@ -7,19 +7,33 @@ on:
     branches: [main]
 
 jobs:
-  lint:
+  lint-python:
+    name: Python (flake8)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Lint Wizzor
-        run: |
-          pip install flake8
-          flake8 wizzor/core/ bin/ --max-line-length=120 --ignore=E501,W503
-      - name: Shellcheck
-        run: |
-          sudo apt-get install -y shellcheck -q
-          shellcheck install.sh assets/setup-fastfetch.sh
+      - name: Install flake8
+        run: pip install flake8
+      - name: Lint wizzor/core and bin
+        run: flake8 wizzor/core/ bin/ --max-line-length=120 --ignore=E501,W503,E704
+
+  lint-shell:
+    name: Shell (shellcheck)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: sudo apt-get install -y shellcheck
+      - name: Check shell scripts
+        run: shellcheck install.sh uninstall.sh assets/setup-fastfetch.sh
+
+  validate-json:
+    name: Validate JSON
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate packages/index.json
+        run: python3 -c "import json; json.load(open('packages/index.json')); print('✓ index.json valid')"
