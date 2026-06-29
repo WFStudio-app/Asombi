@@ -1,0 +1,19 @@
+[package]
+name = "asombi-loader"
+version = "0.1.0"
+edition = "2021"
+description = "Asombi OS custom loader — direct syscall layer for Android/ARM64"
+authors = ["WFWorld"]
+license = "MIT"
+
+[[bin]]
+name = "asombi-loader"
+path = "src/main.rs"
+
+[dependencies]
+libc = "0.2"
+
+[profile.release]
+opt-level = 3
+strip = true
+lto = true
