@@ -16,10 +16,14 @@ fn main() {
         process::exit(1);
     });
 
-    let cmd = std::env::args().nth(2)
-        .unwrap_or_else(|| "/bin/sh".to_string());
+    let rest_args: Vec<String> = std::env::args().skip(2).collect();
+    let cmd_args = if rest_args.is_empty() {
+        vec!["/bin/sh".to_string()]
+    } else {
+        rest_args
+    };
 
-    match loader::launch(&rootfs, &cmd, &caps) {
+    match loader::launch(&rootfs, &cmd_args, &caps) {
         Ok(_) => {},
         Err(e) => {
             eprintln!("  [!] Launch failed: {}", e);
