@@ -12,19 +12,17 @@ import tarfile
 import shutil
 
 VERSION = "0.1.00"
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# realpath чтобы работало и через симлинк /usr/bin/os
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 DATA_DIR = os.path.expanduser("~/.asombi")
 INSTANCES_DIR = os.path.join(DATA_DIR, "instances")
 INSTANCES_FILE = os.path.join(DATA_DIR, "instances.json")
 
-# Alpine Linux минимальный rootfs для ARM64
 ALPINE_VERSION = "3.19"
 ALPINE_ROOTFS_URL = (
     f"https://dl-cdn.alpinelinux.org/alpine/v{ALPINE_VERSION}"
     f"/releases/aarch64/alpine-minirootfs-{ALPINE_VERSION}.0-aarch64.tar.gz"
 )
-
-# Для x86_64 (если запускается не на ARM)
 ALPINE_ROOTFS_URL_x86 = (
     f"https://dl-cdn.alpinelinux.org/alpine/v{ALPINE_VERSION}"
     f"/releases/x86_64/alpine-minirootfs-{ALPINE_VERSION}.0-x86_64.tar.gz"
@@ -51,7 +49,7 @@ BANNER = """
 \033[96m  ██╔══██║░╚═══██╗██║░░██║██║╚██╔╝██║██╔══██╗██║\033[0m
 \033[96m  ██║░░██║██████╔╝╚█████╔╝██║░╚═╝░██║██████╦╝██║\033[0m
 \033[96m  ╚═╝░░╚═╝╚═════╝░╚════╝░╚═╝░░░╚═╝╚═════╝░╚═╝\033[0m
-\033[2m  Asombi OS v0.1.0 | Alpine Linux Base | Wizzor PKG\033[0m
+\033[2m  Asombi OS v0.1.00 | Alpine Linux Base | Wizzor PKG\033[0m
 """
 
 def ok(msg):   print(c("green",  f"  [  OK  ] {msg}"))
@@ -78,17 +76,14 @@ def get_arch():
     return "x86_64"
 
 def check_proot():
-    """Проверяем наличие proot в системе"""
     return shutil.which("proot") is not None
 
 def install_proot():
-    """Устанавливаем proot через pkg (Termux)"""
     info("Installing proot...")
-    ret = os.system("pkg install proot proot-distro -y 2>/dev/null || apt-get install proot -y 2>/dev/null")
+    os.system("pkg install proot -y 2>/dev/null || apt-get install proot -y 2>/dev/null")
     return check_proot()
 
 def download_alpine(rootfs_dir, arch):
-    """Скачиваем и распаковываем Alpine rootfs"""
     url = ALPINE_ROOTFS_URL if arch == "aarch64" else ALPINE_ROOTFS_URL_x86
     tarball = os.path.join(DATA_DIR, f"alpine-{arch}.tar.gz")
 
@@ -97,8 +92,7 @@ def download_alpine(rootfs_dir, arch):
 
     def progress(count, block_size, total_size):
         if total_size > 0:
-            percent = int(count * block_size * 100 / total_size)
-            percent = min(percent, 100)
+            percent = min(int(count * block_size * 100 / total_size), 100)
             bar = "█" * (percent // 5) + "░" * (20 - percent // 5)
             sys.stdout.write(f"\r  [{bar}] {percent}%")
             sys.stdout.flush()
@@ -112,7 +106,6 @@ def download_alpine(rootfs_dir, arch):
 
     ok("Download complete")
     info("Extracting rootfs...")
-
     os.makedirs(rootfs_dir, exist_ok=True)
     try:
         with tarfile.open(tarball, "r:gz") as tar:
@@ -126,77 +119,103 @@ def download_alpine(rootfs_dir, arch):
     return True
 
 def setup_asombi_inside(rootfs_dir, instance_name):
-    """Настройка Asombi внутри Alpine"""
-
-    # resolv.conf для DNS
-    resolv = os.path.join(rootfs_dir, "etc", "resolv.conf")
-    with open(resolv, "w") as f:
+    # DNS
+    etc_dir = os.path.join(rootfs_dir, "etc")
+    os.makedirs(etc_dir, exist_ok=True)
+    with open(os.path.join(etc_dir, "resolv.conf"), "w") as f:
         f.write("nameserver 8.8.8.8\nnameserver 1.1.1.1\n")
 
-    # Кастомный промпт asombi@asombi-root + fastfetch при входе
-    profile = os.path.join(rootfs_dir, "etc", "profile.d", "asombi.sh")
-    os.makedirs(os.path.dirname(profile), exist_ok=True)
-    with open(profile, "w") as f:
+    # /etc/profile — Alpine ash читает именно его при -l (login shell)
+    # Записываем промпт и вызов profile.d прямо в /etc/profile
+    profile_path = os.path.join(rootfs_dir, "etc", "profile")
+    with open(profile_path, "w") as f:
         f.write(
             "#!/bin/sh\n"
-            "# Asombi OS Profile\n"
+            "# Asombi OS /etc/profile\n"
+            "\n"
             f'export ASOMBI_INSTANCE="{instance_name}"\n'
             f'export ASOMBI_VERSION="{VERSION}"\n'
             "\n"
-            "PS1='\033[96masombi\033[0m@\033[92masombi-root\033[0m:\033[93m\w\033[0m# '\n"
+            # FIX: правильный промпт asombi@asombi-root
+            "PS1='\\[\\033[96m\\]asombi\\[\\033[0m\\]@\\[\\033[92m\\]asombi-root\\[\\033[0m\\]:\\[\\033[93m\\]\\w\\[\\033[0m\\]# '\n"
             "export PS1\n"
             "\n"
+            "# Загружаем profile.d\n"
+            "for f in /etc/profile.d/*.sh; do\n"
+            "  [ -r \"$f\" ] && . \"$f\"\n"
+            "done\n"
+            "unset f\n"
+            "\n"
+            "# Показываем лого при входе\n"
             "if command -v fastfetch >/dev/null 2>&1; then\n"
             "    fastfetch --config /root/.config/fastfetch/config.jsonc\n"
-            "elif command -v neofetch >/dev/null 2>&1; then\n"
-            "    neofetch --ascii /root/.asombi/logo.txt --ascii_colors 6 4\n"
-            "else\n"
-            "    cat /root/.asombi/logo.txt 2>/dev/null\n"
+            "elif [ -f /root/.asombi/logo.txt ]; then\n"
+            "    cat /root/.asombi/logo.txt\n"
             "    echo ''\n"
-            f"    echo '  Asombi OS v{VERSION}  |  Instance: {instance_name}'\n"
-            "    echo '  wiz help - packages  |  exit - logout'\n"
+            f'    echo '  Asombi OS v{VERSION}  |  {instance_name}'\n'
+            "    echo '  wiz help — packages  |  exit — logout'\n"
             "fi\n"
         )
 
-    # Копируем assets (логотип + fastfetch конфиг) внутрь Alpine
+    # profile.d/asombi.sh — дополнительные переменные окружения
+    profile_d = os.path.join(rootfs_dir, "etc", "profile.d")
+    os.makedirs(profile_d, exist_ok=True)
+    with open(os.path.join(profile_d, "asombi.sh"), "w") as f:
+        f.write(
+            "#!/bin/sh\n"
+            "export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n"
+            "export TERM=xterm-256color\n"
+            "export LANG=en_US.UTF-8\n"
+        )
+
+    # assets
     assets_src = os.path.join(ROOT_DIR, "assets")
-    assets_dst = os.path.join(rootfs_dir, "opt", "asombi", "assets")
-    if os.path.exists(assets_dst):
-        shutil.rmtree(assets_dst)
-    shutil.copytree(assets_src, assets_dst)
+    if os.path.exists(assets_src):
+        assets_dst = os.path.join(rootfs_dir, "opt", "asombi", "assets")
+        if os.path.exists(assets_dst):
+            shutil.rmtree(assets_dst)
+        shutil.copytree(assets_src, assets_dst)
 
-    # Раскладываем по нужным путям внутри rootfs
-    ff_conf_dir = os.path.join(rootfs_dir, "root", ".config", "fastfetch")
-    logo_dir    = os.path.join(rootfs_dir, "root", ".asombi")
-    os.makedirs(ff_conf_dir, exist_ok=True)
-    os.makedirs(logo_dir, exist_ok=True)
-    shutil.copy2(os.path.join(assets_src, "fastfetch.jsonc"), os.path.join(ff_conf_dir, "config.jsonc"))
-    shutil.copy2(os.path.join(assets_src, "logo.txt"),        os.path.join(logo_dir, "logo.txt"))
+        ff_conf_dir = os.path.join(rootfs_dir, "root", ".config", "fastfetch")
+        logo_dir    = os.path.join(rootfs_dir, "root", ".asombi")
+        os.makedirs(ff_conf_dir, exist_ok=True)
+        os.makedirs(logo_dir, exist_ok=True)
 
-    # Копируем Wizzor внутрь Alpine
-    wiz_target = os.path.join(rootfs_dir, "usr", "local", "bin", "wiz")
+        fc = os.path.join(assets_src, "fastfetch.jsonc")
+        lg = os.path.join(assets_src, "logo.txt")
+        if os.path.exists(fc):
+            shutil.copy2(fc, os.path.join(ff_conf_dir, "config.jsonc"))
+        if os.path.exists(lg):
+            shutil.copy2(lg, os.path.join(logo_dir, "logo.txt"))
+
+    # Копируем wiz внутрь Alpine
+    wiz_bin_dir = os.path.join(rootfs_dir, "usr", "local", "bin")
+    os.makedirs(wiz_bin_dir, exist_ok=True)
+    wiz_target = os.path.join(wiz_bin_dir, "wiz")
     wiz_source = os.path.join(ROOT_DIR, "bin", "wiz")
-    wizzor_core_src = os.path.join(ROOT_DIR, "wizzor")
-    wizzor_core_dst = os.path.join(rootfs_dir, "opt", "wizzor")
-
-    # Копируем wiz бинарник
     shutil.copy2(wiz_source, wiz_target)
     os.chmod(wiz_target, 0o755)
 
-    # Копируем весь wizzor/core
-    if os.path.exists(wizzor_core_dst):
-        shutil.rmtree(wizzor_core_dst)
-    shutil.copytree(wizzor_core_src, wizzor_core_dst)
+    # Копируем wizzor/core внутрь Alpine
+    wizzor_src = os.path.join(ROOT_DIR, "wizzor")
+    wizzor_dst = os.path.join(rootfs_dir, "opt", "wizzor")
+    if os.path.exists(wizzor_dst):
+        shutil.rmtree(wizzor_dst)
+    shutil.copytree(wizzor_src, wizzor_dst)
 
-    # Патчим wiz чтобы он знал путь к core внутри Alpine
+    # Патчим wiz внутри Alpine — путь к core фиксированный
     with open(wiz_target, "r") as f:
-        content = f.read()
-    content = content.replace(
-        'CORE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "wizzor", "core")',
-        'CORE_DIR = "/opt/wizzor/core"'
+        wiz_content = f.read()
+    # Заменяем динамический CORE_DIR на фиксированный путь внутри Alpine
+    wiz_content = wiz_content.replace(
+        "_REAL_FILE = os.path.realpath(__file__)\n"
+        "_BIN_DIR   = os.path.dirname(_REAL_FILE)\n"
+        "_ROOT_DIR  = os.path.dirname(_BIN_DIR)\n"
+        "CORE_DIR   = os.path.join(_ROOT_DIR, \"wizzor\", \"core\")",
+        "CORE_DIR = \"/opt/wizzor/core\""
     )
     with open(wiz_target, "w") as f:
-        f.write(content)
+        f.write(wiz_content)
 
     ok("Wizzor installed inside Alpine")
 
@@ -209,25 +228,10 @@ def boot_sequence(steps):
         sys.stdout.flush()
 
 def launch_proot(rootfs_dir, instance_name):
-    """Запускаем реальный Alpine через proot"""
+    home = os.environ.get("HOME", "/data/data/com.termux/files/home")
 
-    # Привязываем /proc /sys /dev и Termux-префикс
-    prefix = os.environ.get("PREFIX", "/data/data/com.termux/files/usr")
-    home   = os.environ.get("HOME", "/data/data/com.termux/files/home")
-
-    proot_cmd = [
-        "proot",
-        "--kill-on-exit",
-        "-r", rootfs_dir,           # rootfs Alpine
-        "-b", "/dev",
-        "-b", "/proc",
-        "-b", "/sys",
-        "-b", f"{home}:/termux-home",  # Termux home доступен внутри
-        "-w", "/root",              # стартовый каталог
-        "/bin/sh", "/etc/profile.d/asombi.sh",  # показываем приветствие
-    ]
-
-    # Основная команда запуска shell
+    # FIX: используем /bin/sh -l (login shell) вместо --login
+    # Alpine ash правильно читает /etc/profile при -l
     proot_shell = [
         "proot",
         "--kill-on-exit",
@@ -237,7 +241,7 @@ def launch_proot(rootfs_dir, instance_name):
         "-b", "/sys",
         "-b", f"{home}:/termux-home",
         "-w", "/root",
-        "/bin/sh", "--login",
+        "/bin/sh", "-l",   # FIX: -l читает /etc/profile → промпт asombi@asombi-root
     ]
 
     try:
@@ -252,7 +256,6 @@ def cmd_login(instance_name):
     print(BANNER)
     print(f"  {c('bold', 'Booting instance:')} {c('cyan', instance_name)}\n")
 
-    # Проверка proot
     if not check_proot():
         warn("proot not found. Attempting install...")
         if not install_proot():
@@ -260,11 +263,9 @@ def cmd_login(instance_name):
             sys.exit(1)
     ok("proot found")
 
-    # Путь к rootfs этого инстанса
     rootfs_dir = os.path.join(INSTANCES_DIR, instance_name, "rootfs")
-
-    # Если Alpine ещё не скачан — скачиваем
     alpine_marker = os.path.join(rootfs_dir, "etc", "alpine-release")
+
     if not os.path.exists(alpine_marker):
         info("First boot: setting up Alpine Linux rootfs...")
         arch = get_arch()
@@ -283,7 +284,6 @@ def cmd_login(instance_name):
 
         setup_asombi_inside(rootfs_dir, instance_name)
 
-        # Сохраняем инстанс
         instances = load_instances()
         instances[instance_name] = {
             "name": instance_name,
@@ -303,9 +303,7 @@ def cmd_login(instance_name):
 
     print(f"\n  {c('green', '✓')} Entering Asombi OS — {c('cyan', instance_name)}\n")
     time.sleep(0.3)
-
     launch_proot(rootfs_dir, instance_name)
-
     print(f"\n  {c('yellow', 'Session ended.')} Goodbye!\n")
 
 def cmd_instances():
@@ -357,19 +355,15 @@ def main():
             err("Usage: os login <instance-name>")
             sys.exit(1)
         cmd_login(args[1])
-
     elif cmd == "instances":
         cmd_instances()
-
     elif cmd == "remove":
         if len(args) < 2:
             err("Usage: os remove <instance-name>")
             sys.exit(1)
         cmd_remove(args[1])
-
     elif cmd == "version":
         print(f"  Asombi OS v{VERSION} | Alpine {ALPINE_VERSION} base")
-
     else:
         err(f"Unknown command: '{cmd}'")
         print(f"  Run 'os' for help.")
