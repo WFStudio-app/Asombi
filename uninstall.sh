@@ -1,40 +1,40 @@
 #!/bin/bash
-# Asombi OS — Uninstaller
+# Asombi OS - Uninstaller
 
 set -e
 
 PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
-BIN_DIR="$PREFIX/bin"
-ASOMBI_DATA="$HOME/.asombi"
-WIZZOR_DATA="$HOME/.wizzor"
+BIN_DIR="${PREFIX}/bin"
+ASOMBI_DIR="${HOME}/.asombi/Asombi"
+ASOMBI_DATA="${HOME}/.asombi"
+WIZZOR_DATA="${HOME}/.wizzor"
+
+ok()   { echo "  [OK] $1"; }
+warn() { echo "  [!!] $1"; }
 
 echo ""
-echo "  Asombi OS — Uninstaller"
+echo "  Asombi OS - Uninstaller"
 echo ""
 
-warn() { echo "  [!] $1"; }
-ok()   { echo "  [✓] $1"; }
-
-# Удаляем симлинки
+# Удаляем симлинки только если они указывают на Asombi
 for cmd in os wiz; do
-    if [ -L "$BIN_DIR/$cmd" ]; then
-        rm -f "$BIN_DIR/$cmd"
-        ok "Removed command: $cmd"
+    TARGET="${BIN_DIR}/${cmd}"
+    if [ -L "${TARGET}" ]; then
+        LINK_DEST=$(readlink "${TARGET}")
+        if echo "${LINK_DEST}" | grep -q "asombi\|Asombi\|wizzor"; then
+            rm -f "${TARGET}"
+            ok "Removed command: ${cmd}"
+        else
+            warn "Skipping ${cmd} — points to ${LINK_DEST} (not Asombi)"
+        fi
     fi
 done
 
-# Спрашиваем про данные
 echo ""
-read -r -p "  Remove all Asombi instances and data (~/.asombi)? [y/N] " answer
+read -r -p "  Remove all instances and data (~/.asombi)? [y/N] " answer
 if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
-    if [ -d "$ASOMBI_DATA" ]; then
-        rm -rf "$ASOMBI_DATA"
-        ok "Removed ~/.asombi (instances, configs)"
-    fi
-    if [ -d "$WIZZOR_DATA" ]; then
-        rm -rf "$WIZZOR_DATA"
-        ok "Removed ~/.wizzor (packages, cache)"
-    fi
+    [ -d "${ASOMBI_DATA}" ] && rm -rf "${ASOMBI_DATA}" && ok "Removed ~/.asombi"
+    [ -d "${WIZZOR_DATA}" ] && rm -rf "${WIZZOR_DATA}" && ok "Removed ~/.wizzor"
 else
     warn "Instance data kept at ~/.asombi"
 fi
