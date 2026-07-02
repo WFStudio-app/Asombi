@@ -1,4 +1,5 @@
-from utils import *
+from utils import err, warn, c, fetch_all_packages, load_installed
+
 
 def cmd_search(args):
     if not args:
@@ -8,9 +9,14 @@ def cmd_search(args):
     query = " ".join(args).lower()
     pkgs = fetch_all_packages()
 
+    if not pkgs:
+        warn("No packages available. Check your repositories.")
+        return
+
     results = {
         name: pkg for name, pkg in pkgs.items()
-        if query in name.lower() or query in pkg.get("description", "").lower()
+        if query in name.lower()
+        or query in pkg.get("description", "").lower()
     }
 
     if not results:
@@ -22,5 +28,5 @@ def cmd_search(args):
 
     for name, pkg in sorted(results.items()):
         status = c("green", " [installed]") if name in installed else ""
-        print(f"  {c('bold', name)} v{pkg.get('version','?')}{status}")
+        print(f"  {c('bold', name)} v{pkg.get('version', '?{status}}")
         print(f"    {pkg.get('description', 'No description')}\n")
