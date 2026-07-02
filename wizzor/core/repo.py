@@ -1,4 +1,8 @@
-from utils import *
+from utils import (
+    ok, err, info, warn, c,
+    load_sources, save_sources, fetch_text, _parse_toml_index
+)
+
 
 def cmd_repo(args):
     if not args:
@@ -22,11 +26,19 @@ def cmd_repo(args):
         if url in sources:
             warn("Repository already added.")
             return
-        # Проверка доступности
         info(f"Checking repository: {url}")
-        data = fetch_json(url)
-        if data is None:
+        text = fetch_text(url)
+        if not text:
             err("Could not reach repository. Not added.")
+            return
+        # Проверяем что это валидный TOML индекс
+        try:
+            toml = _parse_toml_index(text)
+            pkg_count = sum(
+                1 for k in toml if k.startswith("packages."))
+            info(f"Found {pkg_count} package(s) in repository")
+        except Exception as e:
+            err(f"Invalid repository format: {e}")
             return
         sources.append(url)
         save_sources(sources)
