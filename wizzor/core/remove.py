@@ -1,6 +1,8 @@
-import shutil
 import os
-from utils import *
+import shutil
+
+from utils import ok, err, warn, load_installed, save_installed
+
 
 def cmd_remove(args):
     if not args:
@@ -17,6 +19,7 @@ def cmd_remove(args):
         install_dir = installed[name].get("install_dir", "")
         if install_dir and os.path.exists(install_dir):
             shutil.rmtree(install_dir)
+            ok(f"Removed files: {install_dir}")
 
         del installed[name]
         save_installed(installed)
