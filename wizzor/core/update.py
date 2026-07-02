@@ -1,5 +1,9 @@
-from utils import *
-from install import cmd_install
+from utils import (
+    ok, err, info, warn, c,
+    load_installed, fetch_all_packages
+)
+from install import _install_one
+
 
 def cmd_update(args):
     installed = load_installed()
@@ -26,11 +30,14 @@ def cmd_update(args):
         latest  = pkgs[name].get("version", "0")
         if current != latest:
             updates.append(name)
-            info(f"{name}: {current} → {latest}")
+            info(f"{name}: {current} -> {latest}")
 
     if not updates:
         ok("All packages are up to date.")
         return
 
     print(f"\n{c('bold', str(len(updates)))} package(s) to update.")
-    cmd_install(updates)
+    for name in updates:
+        _install_one(name, pkgs, installed)
+        updated = load_installed()
+        installed.update(updated)
