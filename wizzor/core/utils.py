@@ -6,13 +6,15 @@ import shutil
 import hashlib
 import sys
 
-WIZ_DIR      = os.path.expanduser("~/.wizzor")
-INSTALLED_DB = os.path.join(WIZ_DIR, "installed.json")
-CACHE_DIR    = os.path.join(WIZ_DIR, "cache")
-SOURCES_FILE = os.path.join(WIZ_DIR, "sources.list")
-PACKAGES_DIR = os.path.join(WIZ_DIR, "packages")
+# Все пути через централизованный модуль
+from paths import (
+    ASOMBI_ROOT, CACHE_DIR, DATA_DIR, PACKAGES_DIR,
+    INSTALLED_DB, SOURCES_FILE, ensure_dirs
+)
 
-# FIX: обновлён на index.toml
+# Псевдоним для обратной совместимости
+WIZ_DIR = ASOMBI_ROOT
+
 DEFAULT_REPOS = [
     "https://raw.githubusercontent.com/WFStudio-app/Asombi/main/packages/index.toml"
 ]
@@ -37,13 +39,8 @@ def info(msg): print(c("cyan",   f"[i] {msg}"))
 def warn(msg): print(c("yellow", f"[!] {msg}"))
 
 
-def ensure_dirs():
-    os.makedirs(WIZ_DIR, exist_ok=True)
-    os.makedirs(CACHE_DIR, exist_ok=True)
-    os.makedirs(PACKAGES_DIR, exist_ok=True)
-
-
 def load_installed():
+    ensure_dirs()
     if not os.path.exists(INSTALLED_DB):
         return {}
     with open(INSTALLED_DB) as f:
@@ -57,6 +54,7 @@ def save_installed(db):
 
 
 def load_sources():
+    ensure_dirs()
     if not os.path.exists(SOURCES_FILE):
         return list(DEFAULT_REPOS)
     with open(SOURCES_FILE) as f:
@@ -74,7 +72,6 @@ def save_sources(sources):
 
 
 def fetch_text(url):
-    """Скачивает URL и возвращает текст."""
     try:
         req = urllib.request.Request(
             url, headers={"User-Agent": "Wizzor/0.1"})
@@ -99,33 +96,22 @@ def fetch_json(url):
 
 
 def _parse_toml_index(text):
-    """
-    Минимальный TOML парсер для индекса пакетов.
-    Поддерживает секции [repo], [packages.name] и key = "value" / key = [].
-    """
     result = {}
     current = None
-
     for raw_line in text.splitlines():
         line = raw_line.strip()
         if not line or line.startswith("#"):
             continue
-
-        # Секция [packages.curl] или [repo]
         if line.startswith("[") and line.endswith("]"):
             current = line[1:-1]
             if current not in result:
                 result[current] = {}
             continue
-
         if "=" not in line or current is None:
             continue
-
         key, _, val = line.partition("=")
         key = key.strip()
         val = val.strip()
-
-        # Массив ["a", "b"]
         if val.startswith("["):
             inner = val[1:val.rfind("]")]
             arr = [
@@ -134,19 +120,15 @@ def _parse_toml_index(text):
                 if item.strip().strip('"\''')
             ]
             result[current][key] = arr
-        # Строка "value"
-        elif (val.startswith('"'') and val.endswith('"')):
-            result[current][key] = val[1:-1]
-        elif (val.startswith("'") and val.endswith("'")):
+        elif ((val.startswith('"'') and val.endswith('"'))
+              or (val.startswith("'") and val.endswith("'"))):
             result[current][key] = val[1:-1]
         else:
             result[current][key] = val
-
     return result
 
 
 def download_file(url, dest):
-    """Скачивает файл с прогресс-баром."""
     try:
         req = urllib.request.Request(
             url, headers={"User-Agent": "Wizzor/0.1"})
@@ -166,8 +148,8 @@ def download_file(url, dest):
                         sys.stdout.write(
                             f"\r  [{bar}] {downloaded * 100 // total}%  ")
                         sys.stdout.flush()
-            if total > 0:
-                print()
+        if total > 0:
+            print()
         return True
     except Exception as e:
         print()
@@ -184,27 +166,21 @@ def sha256(path):
 
 
 def fetch_all_packages():
-    """Загружает индекс пакетов из всех источников (TOML)."""
     sources = load_sources()
     all_pkgs = {}
-
     for url in sources:
         info(f"Fetching index: {url}")
         text = fetch_text(url)
         if not text:
             continue
-
         try:
             toml = _parse_toml_index(text)
         except Exception as e:
             warn(f"Failed to parse {url}: {e}")
             continue
-
-        # Собираем пакеты из секций [packages.NAME]
         for section, values in toml.items():
             if section.startswith("packages."):
                 name = section[len("packages."):]
                 if name:
                     all_pkgs[name] = values
-
     return all_pkgs
