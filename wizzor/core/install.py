@@ -3,11 +3,11 @@ import tarfile
 import zipfile
 import shutil
 
+from paths import CACHE_DIR, PACKAGES_DIR, ensure_dirs
 from utils import (
     c, ok, err, info, warn,
     fetch_all_packages, load_installed, save_installed,
-    ensure_dirs, download_file, sha256,
-    CACHE_DIR, WIZ_DIR
+    download_file, sha256
 )
 
 
@@ -22,7 +22,6 @@ def cmd_install(args):
         return
 
     installed = load_installed()
-
     for name in args:
         _install_one(name, pkgs, installed)
 
@@ -42,14 +41,12 @@ def _install_one(name, pkgs, installed):
         if inst_ver == version:
             warn(f"'{name}' is already installed (v{version})")
             return
-        else:
-            info(f"Upgrading {name}: {inst_ver} -> {version}")
+        info(f"Upgrading {name}: {inst_ver} -> {version}")
 
     info(f"Version:  {version}")
     info(f"Size:     {pkg.get('size', 'unknown')}")
     info(f"Desc:     {pkg.get('description', 'No description')}")
 
-    # Зависимости
     deps = pkg.get("depends", [])
     if deps:
         info(f"Deps:     {', '.join(deps)}")
@@ -57,16 +54,15 @@ def _install_one(name, pkgs, installed):
             if dep not in installed:
                 info(f"Installing dependency: {dep}")
                 _install_one(dep, pkgs, installed)
-                # Перечитываем installed после установки зависимости
                 installed.update(load_installed())
 
-    url = pkg.get("url")
+    url = pkg.get("url", "")
     if not url:
         err(f"No download URL for '{name}'")
         return
 
     ensure_dirs()
-    filename = os.path.basename(url)
+    filename = os.path.basename(url.rstrip("/"))
     if not filename:
         err(f"Cannot determine filename from URL: {url}")
         return
@@ -77,7 +73,6 @@ def _install_one(name, pkgs, installed):
     if not download_file(url, cache_path):
         return
 
-    # SHA256 проверка
     expected_hash = pkg.get("sha256", "")
     if expected_hash:
         info("Verifying checksum...")
@@ -88,31 +83,27 @@ def _install_one(name, pkgs, installed):
             return
         ok("Checksum verified")
 
-    # Папка установки
-    packages_dir = os.path.join(WIZ_DIR, "packages")
-    install_dir = os.path.join(packages_dir, name)
+    # Путь установки теперь строго внутри ASOMBI_ROOT/packages/
+    install_dir = os.path.join(PACKAGES_DIR, name)
     os.makedirs(install_dir, exist_ok=True)
 
-    # Распаковка
     info("Extracting...")
     try:
         if filename.endswith((".tar.gz", ".tgz", ".tar.xz", ".tar.bz2")):
             with tarfile.open(cache_path) as tar:
-                # Защита от path traversal
-                safe_members = []
-                for member in tar.getmembers():
-                    member_path = os.path.realpath(os.path.join(install_dir, member.name))
-                    if member_path.startswith(os.path.realpath(install_dir)):
-                        safe_members.append(member)
+                safe = []
+                for m in tar.getmembers():
+                    mp = os.path.realpath(os.path.join(install_dir, m.name))
+                    if mp.startswith(os.path.realpath(install_dir)):
+                        safe.append(m)
                     else:
-                        warn(f"Skipping unsafe path: {member.name}")
-                tar.extractall(install_dir, members=safe_members)
+                        warn(f"Skipping unsafe path: {m.name}")
+                tar.extractall(install_dir, members=safe)
         elif filename.endswith(".zip"):
             with zipfile.ZipFile(cache_path) as z:
-                # Защита от path traversal в zip
                 for member in z.namelist():
-                    member_path = os.path.realpath(os.path.join(install_dir, member))
-                    if member_path.startswith(os.path.realpath(install_dir)):
+                    mp = os.path.realpath(os.path.join(install_dir, member))
+                    if mp.startswith(os.path.realpath(install_dir)):
                         z.extract(member, install_dir)
                     else:
                         warn(f"Skipping unsafe zip path: {member}")
@@ -124,12 +115,11 @@ def _install_one(name, pkgs, installed):
         err(f"Extraction failed: {e}")
         return
 
-    # post_install скрипт
     post = pkg.get("post_install", "")
     if post:
         post_path = os.path.realpath(os.path.join(install_dir, post))
-        # Проверяем что скрипт внутри install_dir (защита от traversal)
-        if post_path.startswith(os.path.realpath(install_dir)) and os.path.isfile(post_path):
+        if (post_path.startswith(os.path.realpath(install_dir))
+                and os.path.isfile(post_path)):
             info("Running post-install script...")
             os.system(f"sh {post_path}")
         else:
