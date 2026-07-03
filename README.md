@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/Package%20Manager-Wizzor-cyan?style=flat-square"/>
   <img src="https://img.shields.io/badge/Platform-Termux%20%2F%20Android-orange?style=flat-square&logo=android"/>
   <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square"/>
-  <img src="https://img.shields.io/badge/Version-0.1.01-purple?style=flat-square"/>
+  <img src="https://img.shields.io/badge/Version-0.1.10-purple?style=flat-square"/>
 </p>
 
 ---
@@ -40,9 +40,14 @@ asombi@asombi-root:~#
 pkg update && pkg upgrade -y
 
 # 2. Install dependencies
-pkg install git python -y
+pkg install git python proot -y
 
-# 3. Clone and install
+# 3. One-command install
+curl -sL https://raw.githubusercontent.com/WFStudio-app/Asombi/main/install.sh | bash
+```
+
+Or manual:
+```bash
 git clone https://github.com/WFStudio-app/Asombi.git
 cd Asombi && bash install.sh
 ```
@@ -96,7 +101,7 @@ apk add <package>       # Alpine native packages (also available)
 | `0.1.10` | Major update | New features |
 | `0.2.00` | New release | Significant milestone |
 
-Current version: **0.1.01**
+Current version: **0.1.10**
 
 ---
 
