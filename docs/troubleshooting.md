@@ -20,7 +20,7 @@ If it fails, check your internet connection and retry.
 Your sources list may be empty or unreachable.
 ```bash
 wiz repo list
-wiz repo add https://raw.githubusercontent.com/WFStudio-app/Asombi/main/packages/index.json
+wiz repo add https://raw.githubusercontent.com/WFStudio-app/Asombi/main/packages/index.toml
 ```
 
 ### `Permission denied` on `bin/os` or `bin/wiz`
