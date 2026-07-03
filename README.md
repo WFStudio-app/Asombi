@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/Package%20Manager-Wizzor-cyan?style=flat-square"/>
   <img src="https://img.shields.io/badge/Platform-Termux%20%2F%20Android-orange?style=flat-square&logo=android"/>
   <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square"/>
-  <img src="https://img.shields.io/badge/Version-0.1.10-purple?style=flat-square"/>
+  <img src="https://img.shields.io/badge/Version-0.1.11-purple?style=flat-square"/>
 </p>
 
 ---
@@ -101,7 +101,7 @@ apk add <package>       # Alpine native packages (also available)
 | `0.1.10` | Major update | New features |
 | `0.2.00` | New release | Significant milestone |
 
-Current version: **0.1.10**
+Current version: **0.1.11**
 
 ---
 
