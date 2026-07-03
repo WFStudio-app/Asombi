@@ -8,17 +8,14 @@ import json
 import time
 import subprocess
 import urllib.request
-import tarfile
 import shutil
 
 VERSION = "0.1.00"
 
-# realpath — работает через симлинк /usr/bin/os -> ~/.asombi/Asombi/bin/os
 _REAL_FILE = os.path.realpath(__file__)
 _BIN_DIR   = os.path.dirname(_REAL_FILE)
 ROOT_DIR   = os.path.dirname(_BIN_DIR)
 
-# Добавляем wizzor/core в path чтобы импортировать paths.py
 sys.path.insert(0, os.path.join(ROOT_DIR, "wizzor", "core"))
 
 from paths import (
@@ -28,15 +25,15 @@ from paths import (
     ensure_dirs, size_of, human_size
 )
 
-ALPINE_VERSION      = "3.19"
-ALPINE_URL_ARM64    = f"https://dl-cdn.alpinelinux.org/alpine/v{ALPINE_VERSION}/releases/aarch64/alpine-minirootfs-{ALPINE_VERSION}.0-aarch64.tar.gz"
-ALPINE_URL_X86      = f"https://dl-cdn.alpinelinux.org/alpine/v{ALPINE_VERSION}/releases/x86_64/alpine-minirootfs-{ALPINE_VERSION}.0-x86_64.tar.gz"
+ALPINE_VERSION   = "3.19"
+ALPINE_URL_ARM64 = f"https://dl-cdn.alpinelinux.org/alpine/v{ALPINE_VERSION}/releases/aarch64/alpine-minirootfs-{ALPINE_VERSION}.0-aarch64.tar.gz"
+ALPINE_URL_X86   = f"https://dl-cdn.alpinelinux.org/alpine/v{ALPINE_VERSION}/releases/x86_64/alpine-minirootfs-{ALPINE_VERSION}.0-x86_64.tar.gz"
 
 COLORS = {
-    "green":   "\033[92m", "red":   "\033[91m",
-    "yellow":  "\033[93m", "cyan":  "\033[96m",
-    "reset":   "\033[0m",  "bold":  "\033[1m",
-    "dim":     "\033[2m",
+    "green":  "\033[92m", "red":    "\033[91m",
+    "yellow": "\033[93m", "cyan":   "\033[96m",
+    "reset":  "\033[0m",  "bold":   "\033[1m",
+    "dim":    "\033[2m",
 }
 
 def c(color, text):
@@ -59,8 +56,6 @@ def info(msg): print(c("cyan",   f"  [  ..  ] {msg}"))
 def warn(msg): print(c("yellow", f"  [  !!  ] {msg}"))
 
 
-# ── Инстансы ─────────────────────────────────────────────────────
-
 def load_instances():
     ensure_dirs()
     if not os.path.exists(INSTANCES_FILE):
@@ -72,9 +67,6 @@ def save_instances(data):
     ensure_dirs()
     with open(INSTANCES_FILE, "w") as f:
         json.dump(data, f, indent=2)
-
-
-# ── Утилиты ──────────────────────────────────────────────────────
 
 def get_arch():
     import platform
@@ -92,8 +84,6 @@ def boot_sequence(steps):
         sys.stdout.write(f"\r  {c('green', '[  OK  ]')} {step}\n")
         sys.stdout.flush()
 
-
-# ── Скачивание Alpine ─────────────────────────────────────────────
 
 def download_alpine(rootfs_dir, arch):
     url     = ALPINE_URL_ARM64 if arch == "aarch64" else ALPINE_URL_X86
@@ -118,18 +108,35 @@ def download_alpine(rootfs_dir, arch):
     ok("Download complete")
     info("Extracting rootfs...")
     os.makedirs(rootfs_dir, exist_ok=True)
+
+    # ФИКС: используем системный tar вместо Python tarfile
+    # Python tarfile отказывается от абсолютных симлинков
+    # (например ./usr/bin/yes -> /bin/yes в Alpine busybox)
+    # Системный tar в Termux обрабатывает их корректно
+    ret = subprocess.run(
+        ["tar", "-xzf", tarball, "-C", rootfs_dir],
+        capture_output=True
+    )
+    if ret.returncode != 0:
+        # Fallback: попробуем с --no-same-owner если есть ошибки прав
+        ret2 = subprocess.run(
+            ["tar", "-xzf", tarball, "-C", rootfs_dir,
+             "--no-same-owner", "--no-same-permissions"],
+            capture_output=True
+        )
+        if ret2.returncode != 0:
+            err(f"Extraction failed: {ret2.stderr.decode().strip()}")
+            return False
+
+    # Удаляем tarball после успешной распаковки
     try:
-        with tarfile.open(tarball, "r:gz") as tar:
-            tar.extractall(rootfs_dir)
-    except Exception as e:
-        err(f"Extraction failed: {e}")
-        return False
+        os.remove(tarball)
+    except Exception:
+        pass
 
     ok("Alpine rootfs ready")
     return True
 
-
-# ── Настройка Asombi внутри Alpine ───────────────────────────────
 
 def setup_inside(rootfs_dir, instance_name):
     # DNS
@@ -138,7 +145,7 @@ def setup_inside(rootfs_dir, instance_name):
     with open(os.path.join(etc, "resolv.conf"), "w") as f:
         f.write("nameserver 8.8.8.8\nnameserver 1.1.1.1\n")
 
-    # /etc/profile — читается ash при -l (login shell)
+    # /etc/profile
     with open(os.path.join(etc, "profile"), "w") as f:
         f.write(
             "#!/bin/sh\n"
@@ -148,14 +155,12 @@ def setup_inside(rootfs_dir, instance_name):
             "export TERM=xterm-256color\n"
             "export LANG=en_US.UTF-8\n"
             "export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n\n"
-            # Правильный промпт
-            "PS1='\\[\\033[96m\\]asombi\\[\\033[0m\\]@\\[\\033[92m\\]asombi-root\\[\\033[0m\\]:\\[\\033[93m\\]\\w\\[\\033[0m\\]# '\n"
+            "PS1='\\[\\033[96m\\]asombi\\[\\033[0m\\]@\\[\\033[92m\\]asombi-root"
+            "\\[\\033[0m\\]:\\[\\033[93m\\]\\w\\[\\033[0m\\]# '\n"
             "export PS1\n\n"
-            "# profile.d\n"
             "for _f in /etc/profile.d/*.sh; do\n"
             "  [ -r \"$_f\" ] && . \"$_f\"\n"
             "done\nunset _f\n\n"
-            "# Приветствие\n"
             "if command -v fastfetch >/dev/null 2>&1; then\n"
             "    fastfetch --config /root/.config/fastfetch/config.jsonc 2>/dev/null\n"
             "elif [ -f /root/.asombi/logo.txt ]; then\n"
@@ -184,7 +189,7 @@ def setup_inside(rootfs_dir, instance_name):
                 os.makedirs(os.path.dirname(dst), exist_ok=True)
                 shutil.copy2(src, dst)
 
-    # Копируем wiz внутрь Alpine
+    # Wizzor внутрь Alpine
     wiz_dst_dir = os.path.join(rootfs_dir, "usr", "local", "bin")
     os.makedirs(wiz_dst_dir, exist_ok=True)
     wiz_src = os.path.join(ROOT_DIR, "bin", "wiz")
@@ -192,20 +197,17 @@ def setup_inside(rootfs_dir, instance_name):
     shutil.copy2(wiz_src, wiz_dst)
     os.chmod(wiz_dst, 0o755)
 
-    # Копируем wizzor/core внутрь Alpine
+    # wizzor/core внутрь Alpine
     core_src = os.path.join(ROOT_DIR, "wizzor", "core")
     core_dst = os.path.join(rootfs_dir, "opt", "wizzor", "core")
     if os.path.exists(core_dst):
         shutil.rmtree(core_dst)
     shutil.copytree(core_src, core_dst)
 
-    # Патчим bin/wiz внутри Alpine — жёсткий путь к core
+    # Патч пути внутри Alpine
     with open(wiz_dst) as f:
         wiz_content = f.read()
     wiz_content = wiz_content.replace(
-        "_REAL_FILE = os.path.realpath(__file__)\n"
-        "_BIN_DIR   = os.path.dirname(_REAL_FILE)\n"
-        "ROOT_DIR   = os.path.dirname(_BIN_DIR)\n"
         "sys.path.insert(0, os.path.join(ROOT_DIR, \"wizzor\", \"core\"))",
         "sys.path.insert(0, \"/opt/wizzor/core\")"
     )
@@ -215,8 +217,6 @@ def setup_inside(rootfs_dir, instance_name):
     ok("Wizzor installed inside Alpine")
 
 
-# ── Запуск proot ─────────────────────────────────────────────────
-
 def launch_proot(rootfs_dir):
     home = os.environ.get("HOME", "/data/data/com.termux/files/home")
     cmd = [
@@ -225,9 +225,9 @@ def launch_proot(rootfs_dir):
         "-b", "/dev",
         "-b", "/proc",
         "-b", "/sys",
-        "-b", f"{home}:/termux-home",   # Termux home доступен внутри
+        "-b", f"{home}:/termux-home",
         "-w", "/root",
-        "/bin/sh", "-l",                # -l читает /etc/profile → правильный промпт
+        "/bin/sh", "-l",
     ]
     try:
         subprocess.run(cmd)
@@ -237,8 +237,6 @@ def launch_proot(rootfs_dir):
     except KeyboardInterrupt:
         pass
 
-
-# ── Команды ──────────────────────────────────────────────────────
 
 def cmd_login(name):
     print(BANNER)
@@ -298,13 +296,8 @@ def cmd_login(name):
 
 
 def cmd_delete(args):
-    """
-    delete os <name>    — удалить конкретный инстанс
-    delete os --all     — удалить все инстансы
-    delete os --full    — полное удаление (инстансы + кэш + пакеты)
-    """
     if not args:
-        err("Usage: delete os <name> | --all | --full")
+        err("Usage: os delete <name> | --all | --full")
         return
 
     instances = load_instances()
@@ -313,8 +306,7 @@ def cmd_delete(args):
     if flag == "--full":
         warn("This will delete ALL Asombi data:")
         print(f"  {ASOMBI_ROOT}")
-        size = human_size(size_of(ASOMBI_ROOT))
-        print(f"  Size: {size}")
+        print(f"  Size: {human_size(size_of(ASOMBI_ROOT))}")
         confirm = input("\n  Are you sure? Type 'yes' to confirm: ").strip()
         if confirm != "yes":
             print("  Aborted.")
@@ -334,7 +326,7 @@ def cmd_delete(args):
         if confirm != "yes":
             print("  Aborted.")
             return
-        for n, meta in instances.items():
+        for n in list(instances.keys()):
             idir = instance_dir(n)
             if os.path.exists(idir):
                 shutil.rmtree(idir)
@@ -342,29 +334,24 @@ def cmd_delete(args):
         save_instances({})
         return
 
-    # Удаление конкретного инстанса
     name = flag
     if name not in instances:
         err(f"Instance '{name}' not found.")
         cmd_instances()
         return
 
-    rootfs = instance_rootfs(name)
-    idir   = instance_dir(name)
-    size   = human_size(size_of(idir)) if os.path.exists(idir) else "0 B"
-
+    idir = instance_dir(name)
+    size = human_size(size_of(idir)) if os.path.exists(idir) else "0 B"
     warn(f"Deleting instance '{name}' ({size})...")
-    confirm = input(f"  Confirm? [y/N] ").strip().lower()
+    confirm = input("  Confirm? [y/N] ").strip().lower()
     if confirm != "y":
         print("  Aborted.")
         return
-
     if os.path.exists(idir):
         shutil.rmtree(idir)
-
     del instances[name]
     save_instances(instances)
-    ok(f"Instance '{name}' deleted. All files removed.")
+    ok(f"Instance '{name}' deleted.")
 
 
 def cmd_instances():
@@ -373,11 +360,10 @@ def cmd_instances():
         warn("No instances found.")
         print(f"  Create one: {c('cyan', 'os login asombi-1')}\n")
         return
-
     print(f"\n  {c('bold', 'Asombi instances:')}\n")
     for name, meta in instances.items():
-        idir = instance_dir(name)
-        size = human_size(size_of(idir)) if os.path.exists(idir) else "?"
+        idir    = instance_dir(name)
+        size    = human_size(size_of(idir)) if os.path.exists(idir) else "?"
         created = meta.get("created", "?")
         base    = meta.get("base", "?")
         print(f"  {c('cyan', name):<20} {base:<25} {size:<10} {c('dim', created)}")
@@ -390,15 +376,15 @@ def main():
     if not args:
         print(BANNER)
         print(f"  Usage:")
-        print(f"    {c('cyan', 'os login <name>')}          Start or create instance")
-        print(f"    {c('cyan', 'os delete <name>')}         Delete instance (all files)")
-        print(f"    {c('cyan', 'os delete --all')}          Delete all instances")
-        print(f"    {c('cyan', 'os delete --full')}         Full removal (instances+cache+packages)")
-        print(f"    {c('cyan', 'os instances')}             List all instances")
-        print(f"    {c('cyan', 'os version')}               Show version\n")
+        print(f"    {c('cyan', 'os login <name>')}         Start or create instance")
+        print(f"    {c('cyan', 'os delete <name>')}        Delete instance (all files)")
+        print(f"    {c('cyan', 'os delete --all')}         Delete all instances")
+        print(f"    {c('cyan', 'os delete --full')}        Full removal (instances+cache+packages)")
+        print(f"    {c('cyan', 'os instances')}            List all instances")
+        print(f"    {c('cyan', 'os version')}              Show version\n")
         return
 
-    cmd = args[0]
+    cmd  = args[0]
     rest = args[1:]
 
     if cmd == "login":
@@ -406,16 +392,12 @@ def main():
             err("Usage: os login <instance-name>")
             sys.exit(1)
         cmd_login(rest[0])
-
     elif cmd == "delete":
         cmd_delete(rest)
-
     elif cmd == "instances":
         cmd_instances()
-
     elif cmd == "version":
         print(f"  Asombi OS v{VERSION} | Alpine {ALPINE_VERSION}")
-
     else:
         err(f"Unknown command: '{cmd}'")
         print("  Run 'os' for help.")
