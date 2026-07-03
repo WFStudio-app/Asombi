@@ -15,6 +15,31 @@ Android Device
     └── wiz (Python)         ← Can also run standalone in Termux
 ```
 
+
+## asombi-loader (Rust)
+
+`asombi-loader` is a custom Rust binary that will replace proot as the
+container launcher. It is currently in development (`loader/` directory).
+
+```
+asombi-loader
+├── probe.rs     — detects available kernel syscalls without crashing
+├── mount.rs     — sets up rootfs, bind mounts
+└── loader.rs    — launches process via execve with full argv
+```
+
+**Adaptive strategy** (auto-selected based on kernel capabilities):
+
+| Strategy | Requires | Description |
+|----------|----------|-------------|
+| `Native` | unshare + mount + chroot | Full namespace isolation |
+| `Chroot` | chroot | Root change, no namespace |
+| `BindOnly` | nothing | Bind mounts only |
+
+**Current status:** compiled and tested on x86_64 Linux with root.
+Not yet integrated into `os login` — proot is still used by default.
+Integration planned for v0.2.00.
+
 ## Components
 
 ### `bin/os`
