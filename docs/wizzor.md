@@ -2,6 +2,26 @@
 
 Wizzor is the built-in package manager for Asombi OS.
 
+
+## Implementation status
+
+Wizzor is currently being rewritten from Python to Go (`wizzor-go/`).
+
+| Command | Python (active) | Go (in progress) |
+|---------|----------------|------------------|
+| `wiz install` | ✅ Working | 🔜 Etap 3 |
+| `wiz remove` | ✅ Working | 🔜 Etap 3 |
+| `wiz update` | ✅ Working | 🔜 Etap 4 |
+| `wiz search` | ✅ Working | ✅ Done |
+| `wiz list` | ✅ Working | ✅ Done |
+| `wiz info` | ✅ Working | 🔜 Etap 3 |
+| `wiz repo` | ✅ Working | 🔜 Etap 4 |
+| `wiz clean` | ✅ Working | 🔜 Etap 3 |
+| `wiz version` | ✅ Working | ✅ Done |
+
+**Currently `bin/wiz` runs the Python version.** The Go binary will replace it
+when all commands reach parity.
+
 ## Commands
 
 ### wiz install
