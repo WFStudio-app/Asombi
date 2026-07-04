@@ -16,7 +16,7 @@ _REAL_FILE = os.path.realpath(__file__)
 _BIN_DIR   = os.path.dirname(_REAL_FILE)
 ROOT_DIR   = os.path.dirname(_BIN_DIR)
 
-sys.path.insert(0, os.path.join(ROOT_DIR, "wizzor", "core"))
+sys.path.insert(0, os.path.join(ROOT_DIR, "truck", "core"))
 
 from paths import (
     ASOMBI_ROOT, INSTANCES_DIR, INSTANCES_FILE, DATA_DIR,
@@ -192,14 +192,14 @@ def setup_inside(rootfs_dir, instance_name):
     # Wizzor внутрь Alpine
     wiz_dst_dir = os.path.join(rootfs_dir, "usr", "local", "bin")
     os.makedirs(wiz_dst_dir, exist_ok=True)
-    wiz_src = os.path.join(ROOT_DIR, "bin", "wiz")
-    wiz_dst = os.path.join(wiz_dst_dir, "wiz")
+    wiz_src = os.path.join(ROOT_DIR, "bin", "trk")
+    wiz_dst = os.path.join(wiz_dst_dir, "trk")
     shutil.copy2(wiz_src, wiz_dst)
     os.chmod(wiz_dst, 0o755)
 
-    # wizzor/core внутрь Alpine
-    core_src = os.path.join(ROOT_DIR, "wizzor", "core")
-    core_dst = os.path.join(rootfs_dir, "opt", "wizzor", "core")
+    # truck/core внутрь Alpine
+    core_src = os.path.join(ROOT_DIR, "truck", "core")
+    core_dst = os.path.join(rootfs_dir, "opt", "truck", "core")
     if os.path.exists(core_dst):
         shutil.rmtree(core_dst)
     shutil.copytree(core_src, core_dst)
@@ -230,7 +230,7 @@ def setup_inside(rootfs_dir, instance_name):
         (shebang + "\n" if shebang else "") +
         "# Asombi OS internal — path set by installer\n"
         "import sys\n"
-        "sys.path.insert(0, \"/opt/wizzor/core\")\n" +
+        "sys.path.insert(0, \"/opt/truck/core\")\n" +
         "\n".join(filtered)
     )
     with open(wiz_dst, "w") as f:
