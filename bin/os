@@ -154,7 +154,7 @@ def setup_inside(rootfs_dir, instance_name):
             f"export ASOMBI_VERSION=\"{VERSION}\"\n"
             "export TERM=xterm-256color\n"
             "export LANG=en_US.UTF-8\n"
-            "export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\n\n"
+            "export PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin\n\n"
             "PS1='\\[\\033[96m\\]asombi\\[\\033[0m\\]@\\[\\033[92m\\]asombi-root"
             "\\[\\033[0m\\]:\\[\\033[93m\\]\\w\\[\\033[0m\\]# '\n"
             "export PS1\n\n"
@@ -240,7 +240,11 @@ def setup_inside(rootfs_dir, instance_name):
 
 
 def launch_proot(rootfs_dir):
-    home = os.environ.get("HOME", "/data/data/com.termux/files/home")
+    # HOME всегда корректен в Termux, не хардкодим путь
+    home = os.environ.get("HOME", "")
+    if not home:
+        err("HOME environment variable not set")
+        sys.exit(1)
     cmd = [
         "proot", "--kill-on-exit",
         "-r", rootfs_dir,
