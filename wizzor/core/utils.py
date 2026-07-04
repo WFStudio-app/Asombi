@@ -63,7 +63,7 @@ def load_sources():
 def save_sources(sources):
     ensure_dirs()
     with open(SOURCES_FILE, "w") as f:
-        f.write("# Wizzor sources.list\n")
+        f.write("# Truck sources.list\n")
         for s in sources:
             f.write(s + "\n")
 
@@ -71,7 +71,7 @@ def save_sources(sources):
 def fetch_text(url):
     try:
         req = urllib.request.Request(
-            url, headers={"User-Agent": "Wizzor/0.1"})
+            url, headers={"User-Agent": "Truck/0.1"})
         with urllib.request.urlopen(req, timeout=15) as r:
             return r.read().decode()
     except urllib.error.HTTPError as e:
@@ -132,7 +132,7 @@ def download_file(url, dest):
     """Скачивает файл с прогресс-баром."""
     try:
         req = urllib.request.Request(
-            url, headers={"User-Agent": "Wizzor/0.1"})
+            url, headers={"User-Agent": "Truck/0.1"})
         with urllib.request.urlopen(req, timeout=60) as r:
             total = int(r.headers.get("Content-Length", 0))
             downloaded = 0
