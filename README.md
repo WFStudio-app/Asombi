@@ -5,7 +5,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Base-Alpine%20Linux%203.19-blue?style=flat-square&logo=alpinelinux"/>
   <img src="https://img.shields.io/badge/Arch-ARM64%20%2F%20x86__64-green?style=flat-square"/>
-  <img src="https://img.shields.io/badge/Package%20Manager-Wizzor-cyan?style=flat-square"/>
+  <img src="https://img.shields.io/badge/Package%20Manager-Truck-cyan?style=flat-square"/>
   <img src="https://img.shields.io/badge/Platform-Termux%20%2F%20Android-orange?style=flat-square&logo=android"/>
   <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square"/>
   <img src="https://img.shields.io/badge/Version-0.1.11-purple?style=flat-square"/>
@@ -17,7 +17,7 @@
 
 Asombi is a real Linux environment that runs on top of Android via Termux — no root required.
 It uses `proot` to boot a genuine Alpine Linux rootfs with a custom shell, custom prompt,
-and **Wizzor** — its own package manager.
+and **Truck** — its own package manager.
 
 ```
 asombi@asombi-root:~#
@@ -61,7 +61,7 @@ os login asombi-1
 ```
 
 On first boot Asombi downloads Alpine Linux, sets up the environment,
-installs Wizzor, and drops you into a live shell.
+installs Truck, and drops you into a live shell.
 
 ---
 
@@ -79,14 +79,14 @@ os version              # Show version
 ### Inside Asombi
 
 ```bash
-wiz install <package>   # Install a package
-wiz remove  <package>   # Remove a package
-wiz update              # Update all packages
-wiz search  <query>     # Search packages
-wiz list                # List installed packages
-wiz info    <package>   # Show package info
-wiz repo add <url>      # Add a repository
-wiz clean               # Clear cache
+trk install <package>   # Install a package
+trk remove  <package>   # Remove a package
+trk update              # Update all packages
+trk search  <query>     # Search packages
+trk list                # List installed packages
+trk info    <package>   # Show package info
+trk repo add <url>      # Add a repository
+trk clean               # Clear cache
 
 apk add <package>       # Alpine native packages (also available)
 ```
@@ -111,7 +111,7 @@ Current version: **0.1.11**
 |-----|-------------|
 | [docs/faq.md](docs/faq.md) | Frequently asked questions |
 | [docs/troubleshooting.md](docs/troubleshooting.md) | Common issues and fixes |
-| [docs/wizzor.md](docs/wizzor.md) | Wizzor command reference |
+| [docs/truck.md](docs/truck.md) | Truck command reference |
 | [docs/packages.md](docs/packages.md) | Creating and publishing packages |
 | [docs/instances.md](docs/instances.md) | Managing instances |
 | [docs/architecture.md](docs/architecture.md) | System architecture |
@@ -125,7 +125,7 @@ Asombi/
 ├── bin/
 │   ├── os               ← Entry point
 │   └── wiz              ← Package manager
-├── wizzor/core/         ← Wizzor modules
+├── truck/core/         ← Truck modules
 ├── packages/index.json  ← Official package index
 ├── assets/              ← Logo, fastfetch config
 ├── docs/                ← Documentation
