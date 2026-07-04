@@ -3,7 +3,7 @@ from utils import err, c, fetch_all_packages, load_installed
 
 def cmd_info(args):
     if not args:
-        err("Usage: wiz info <package>")
+        err("Usage: trk info <package>")
         return
 
     name = args[0]
