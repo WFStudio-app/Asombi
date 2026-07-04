@@ -127,7 +127,7 @@ fi
 chmod +x "${ASOMBI_DIR}/bin/os" "${ASOMBI_DIR}/bin/trk"
 
 # ── БАГ 6 ФИКС: симлинки не перезаписывают чужие файлы ──────────
-for CMD in os wiz; do
+for CMD in os trk; do
     TARGET="${BIN_DIR}/${CMD}"
     if [ -e "${TARGET}" ] && [ ! -L "${TARGET}" ]; then
         warn "${TARGET} exists and is not a symlink — skipping to avoid overwrite"
