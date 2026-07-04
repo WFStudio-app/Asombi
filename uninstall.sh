@@ -15,7 +15,7 @@ echo "  Asombi OS - Uninstaller"
 echo ""
 
 # Удаляем симлинки только если они указывают на Asombi
-for cmd in os wiz; do
+for cmd in os trk; do
     TARGET="${BIN_DIR}/${cmd}"
     if [ -L "${TARGET}" ]; then
         LINK_DEST=$(readlink "${TARGET}")
