@@ -14,31 +14,31 @@ Versioning system:
 - **Bug #1** `README.md` — убран двойной `git clone`; установка через один `curl | bash`
 - **Bug #2** `docs/troubleshooting.md` — исправлена ссылка `index.json` → `index.toml`
 - **Bug #3** `install.sh` — предупреждение про Android 12+ Phantom Process Killer при установке
-- **Bug #4** `docs/wizzor.md` — добавлена таблица статуса Python/Go миграции
+- **Bug #4** `docs/truck.md` — добавлена таблица статуса Python/Go миграции
 - **Bug #5** `docs/architecture.md` — задокументирован `asombi-loader` и план интеграции
 - **Bug #6** `install.sh` — симлинки не перезаписывают существующие файлы которые не принадлежат Asombi
 - **Bug #7** `README.md` — бейдж версии обновлён с `0.1.01` до `0.1.10`
 - **Bug #8** `install.sh` — Python версия проверяется одним subprocess вызовом вместо трёх
-- `bin/wiz` — `realpath()` вместо `abspath()` для корректной работы через симлинк
+- `bin/trk` — `realpath()` вместо `abspath()` для корректной работы через симлинк
 - `bin/os` — `/bin/sh -l` вместо `--login` для правильной загрузки `/etc/profile` в Alpine ash
-- `wizzor/core/` — централизованное дерево путей через `paths.py`, все файлы Asombi строго в `~/.asombi/`
-- `wizzor/core/install.py` — защита от path traversal в tar/zip архивах
-- `wizzor/core/repo.py` — валидация TOML формата при `wiz repo add`
-- Все `wizzor/core/` файлы — явные импорты вместо `from utils import *`
+- `truck/core/` — централизованное дерево путей через `paths.py`, все файлы Asombi строго в `~/.asombi/`
+- `truck/core/install.py` — защита от path traversal в tar/zip архивах
+- `truck/core/repo.py` — валидация TOML формата при `trk repo add`
+- Все `truck/core/` файлы — явные импорты вместо `from utils import *`
 
 ### Added
-- `wizzor/core/paths.py` — централизованный модуль путей файловой системы
+- `truck/core/paths.py` — централизованный модуль путей файловой системы
 - `bin/os delete` — команда удаления инстансов (`delete <name>`, `--all`, `--full`)
 - `packages/index.toml` — 8 реальных пакетов с верифицированными SHA256
 
 ---
 
-## [0.1.10] - 2026-06-30 - Wizzor Go Rewrite + Windows Support
+## [0.1.10] - 2026-06-30 - Truck Go Rewrite + Windows Support
 
 ### Added
-- Wizzor package manager rewrite started in Go (wizzor-go/)
-  - Etap 1: `wiz version`, `wiz help`
-  - Etap 2: `wiz search`, `wiz list` (TOML-based index)
+- Truck package manager rewrite started in Go (truck-go/)
+  - Etap 1: `trk version`, `trk help`
+  - Etap 2: `trk search`, `trk list` (TOML-based index)
 - Custom TOML parser (zero dependencies) replacing JSON for package index
 - `packages/index.toml` - official index migrated from JSON to TOML
 - Cross-platform support: Linux (amd64/arm64), Windows (amd64), macOS (amd64/arm64)
@@ -71,7 +71,7 @@ Versioning system:
 - CI split into 3 jobs: Python lint, shellcheck, JSON validation
 
 ### Fixed
-- PEP8 compliance across all wizzor/core modules
+- PEP8 compliance across all truck/core modules
 
 ---
 
@@ -81,7 +81,7 @@ Versioning system:
 - Alpine Linux 3.19 base via proot (ARM64 + x86_64)
 - `os login <instance>` - real Linux session entry point
 - `os instances` / `os remove` - instance management
-- Wizzor package manager: install, remove, update, search, list, info, repo, clean
+- Truck package manager: install, remove, update, search, list, info, repo, clean
 - SHA256 checksum verification
 - Dependency resolution
 - Multi-repository support
