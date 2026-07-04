@@ -5,9 +5,7 @@ set -e
 
 PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
 BIN_DIR="${PREFIX}/bin"
-ASOMBI_DIR="${HOME}/.asombi/Asombi"
 ASOMBI_DATA="${HOME}/.asombi"
-WIZZOR_DATA="${HOME}/.wizzor"
 
 ok()   { echo "  [OK] $1"; }
 warn() { echo "  [!!] $1"; }
@@ -21,7 +19,7 @@ for cmd in os wiz; do
     TARGET="${BIN_DIR}/${cmd}"
     if [ -L "${TARGET}" ]; then
         LINK_DEST=$(readlink "${TARGET}")
-        if echo "${LINK_DEST}" | grep -q "asombi\|Asombi\|wizzor"; then
+        if echo "${LINK_DEST}" | grep -q "asombi\|Asombi"; then
             rm -f "${TARGET}"
             ok "Removed command: ${cmd}"
         else
@@ -31,12 +29,14 @@ for cmd in os wiz; do
 done
 
 echo ""
-read -r -p "  Remove all instances and data (~/.asombi)? [y/N] " answer
+read -r -p "  Remove all Asombi data (~/.asombi)? [y/N] " answer
 if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
-    [ -d "${ASOMBI_DATA}" ] && rm -rf "${ASOMBI_DATA}" && ok "Removed ~/.asombi"
-    [ -d "${WIZZOR_DATA}" ] && rm -rf "${WIZZOR_DATA}" && ok "Removed ~/.wizzor"
+    if [ -d "${ASOMBI_DATA}" ]; then
+        rm -rf "${ASOMBI_DATA}"
+        ok "Removed ~/.asombi (instances, packages, cache, data)"
+    fi
 else
-    warn "Instance data kept at ~/.asombi"
+    warn "Data kept at ~/.asombi"
 fi
 
 echo ""
