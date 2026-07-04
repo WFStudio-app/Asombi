@@ -3,7 +3,7 @@ from utils import err, warn, c, fetch_all_packages, load_installed
 
 def cmd_search(args):
     if not args:
-        err("Usage: wiz search <query>")
+        err("Usage: trk search <query>")
         return
 
     query = " ".join(args).lower()
