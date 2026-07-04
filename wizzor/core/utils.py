@@ -2,17 +2,14 @@ import os
 import json
 import urllib.request
 import urllib.error
-import shutil
 import hashlib
 import sys
 
-# Все пути через централизованный модуль
 from paths import (
     ASOMBI_ROOT, CACHE_DIR, DATA_DIR, PACKAGES_DIR,
     INSTALLED_DB, SOURCES_FILE, ensure_dirs
 )
 
-# Псевдоним для обратной совместимости
 WIZ_DIR = ASOMBI_ROOT
 
 DEFAULT_REPOS = [
@@ -33,8 +30,8 @@ def c(color, text):
     return f"{COLORS.get(color, '')}{text}{COLORS['reset']}"
 
 
-def ok(msg):   print(c("green",  f"[✓] {msg}"))
-def err(msg):  print(c("red",    f"[✗] {msg}"))
+def ok(msg):   print(c("green",  f"[\u2713] {msg}"))
+def err(msg):  print(c("red",    f"[\u2717] {msg}"))
 def info(msg): print(c("cyan",   f"[i] {msg}"))
 def warn(msg): print(c("yellow", f"[!] {msg}"))
 
@@ -96,6 +93,7 @@ def fetch_json(url):
 
 
 def _parse_toml_index(text):
+    """Минимальный TOML парсер для индекса пакетов."""
     result = {}
     current = None
     for raw_line in text.splitlines():
@@ -112,16 +110,18 @@ def _parse_toml_index(text):
         key, _, val = line.partition("=")
         key = key.strip()
         val = val.strip()
+        # Массив
         if val.startswith("["):
-            inner = val[1:val.rfind("]")]
-            arr = [
-                item.strip().strip('"\''')
-                for item in inner.split(",")
-                if item.strip().strip('"\''')
-            ]
+            end = val.rfind("]")
+            inner = val[1:end] if end > 0 else val[1:]
+            arr = []
+            for item in inner.split(","):
+                item = item.strip().strip('"\''')
+                if item:
+                    arr.append(item)
             result[current][key] = arr
-        elif ((val.startswith('"'') and val.endswith('"'))
-              or (val.startswith("'") and val.endswith("'"))):
+        # БАГ 3 ФИКС: правильная проверка кавычек без синтаксических ошибок
+        elif len(val) >= 2 and val[0] == val[-1] and val[0] in ('"', "'"):
             result[current][key] = val[1:-1]
         else:
             result[current][key] = val
@@ -129,6 +129,7 @@ def _parse_toml_index(text):
 
 
 def download_file(url, dest):
+    """Скачивает файл с прогресс-баром."""
     try:
         req = urllib.request.Request(
             url, headers={"User-Agent": "Wizzor/0.1"})
@@ -144,7 +145,7 @@ def download_file(url, dest):
                     downloaded += len(chunk)
                     if total > 0:
                         pct = min(int(downloaded * 20 / total), 20)
-                        bar = "█" * pct + "░" * (20 - pct)
+                        bar = "\u2588" * pct + "\u2591" * (20 - pct)
                         sys.stdout.write(
                             f"\r  [{bar}] {downloaded * 100 // total}%  ")
                         sys.stdout.flush()
@@ -166,6 +167,7 @@ def sha256(path):
 
 
 def fetch_all_packages():
+    """Загружает индекс пакетов из всех источников (TOML)."""
     sources = load_sources()
     all_pkgs = {}
     for url in sources:
