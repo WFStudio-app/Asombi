@@ -10,7 +10,7 @@ Termux home не загрязняется лишними папками.
   ├── instances/        ← изолированные окружения Alpine
   │   └── <name>/
   │       └── rootfs/   ← реальный Alpine rootfs
-  ├── packages/         ← установленные Wizzor пакеты
+  ├── packages/         ← установленные Truck пакеты
   ├── cache/            ← кэш загрузок
   ├── logs/             ← логи операций
   └── data/
