@@ -13,7 +13,7 @@ from utils import (
 
 def cmd_install(args):
     if not args:
-        err("Usage: wiz install <package> [package2 ...]")
+        err("Usage: trk install <package> [package2 ...]")
         return
 
     pkgs = fetch_all_packages()
