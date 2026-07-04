@@ -7,7 +7,7 @@ from utils import ok, err, warn, load_installed, save_installed
 
 def cmd_remove(args):
     if not args:
-        err("Usage: wiz remove <package> [package2 ...]")
+        err("Usage: trk remove <package> [package2 ...]")
         return
 
     installed = load_installed()
