@@ -6,7 +6,7 @@ from utils import (
 
 def cmd_repo(args):
     if not args:
-        print("Usage: wiz repo [add|remove|list] [url]")
+        print("Usage: trk repo [add|remove|list] [url]")
         return
 
     sub = args[0]
@@ -20,7 +20,7 @@ def cmd_repo(args):
 
     elif sub == "add":
         if len(args) < 2:
-            err("Usage: wiz repo add <url>")
+            err("Usage: trk repo add <url>")
             return
         url = args[1]
         if url in sources:
@@ -46,7 +46,7 @@ def cmd_repo(args):
 
     elif sub == "remove":
         if len(args) < 2:
-            err("Usage: wiz repo remove <url>")
+            err("Usage: trk repo remove <url>")
             return
         url = args[1]
         if url not in sources:
