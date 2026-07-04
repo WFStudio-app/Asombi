@@ -204,15 +204,37 @@ def setup_inside(rootfs_dir, instance_name):
         shutil.rmtree(core_dst)
     shutil.copytree(core_src, core_dst)
 
-    # Патч пути внутри Alpine
+    # БАГ 5 ФИКС: вставляем нужный sys.path в начало wiz внутри Alpine
+    # вместо хрупкой замены строки которой может не быть
     with open(wiz_dst) as f:
         wiz_content = f.read()
-    wiz_content = wiz_content.replace(
-        "sys.path.insert(0, os.path.join(ROOT_DIR, \"wizzor\", \"core\"))",
-        "sys.path.insert(0, \"/opt/wizzor/core\")"
+    # Убираем любые попытки вычислить CORE_DIR динамически
+    # и вставляем жёсткий путь как первую строку после shebang
+    lines = wiz_content.splitlines()
+    shebang = lines[0] if lines and lines[0].startswith("#!") else ""
+    rest = "\n".join(lines[1:]) if shebang else wiz_content
+    # Фильтруем строки которые вычисляют CORE_DIR через realpath
+    filtered = []
+    skip_next = False
+    for line in rest.splitlines():
+        if any(x in line for x in [
+            "_REAL_FILE", "_BIN_DIR", "_ROOT_DIR",
+            "CORE_DIR", "os.path.realpath(__file__)",
+            "sys.path.insert(0, CORE_DIR)",
+            "sys.path.insert(0, os.path.join",
+        ]):
+            skip_next = False
+            continue
+        filtered.append(line)
+    fixed_content = (
+        (shebang + "\n" if shebang else "") +
+        "# Asombi OS internal — path set by installer\n"
+        "import sys\n"
+        "sys.path.insert(0, \"/opt/wizzor/core\")\n" +
+        "\n".join(filtered)
     )
     with open(wiz_dst, "w") as f:
-        f.write(wiz_content)
+        f.write(fixed_content)
 
     ok("Wizzor installed inside Alpine")
 
