@@ -1,0 +1,90 @@
+#!/usr/bin/env python3
+# Truck - Package Manager for Asombi OS
+# Works on Android/Termux ARM64
+
+import sys
+import os
+
+VERSION = "0.1.00"
+
+# realpath разрешает симлинк
+_REAL_FILE = os.path.realpath(__file__)
+_BIN_DIR   = os.path.dirname(_REAL_FILE)
+_ROOT_DIR  = os.path.dirname(_BIN_DIR)
+CORE_DIR   = os.path.join(_ROOT_DIR, "truck", "core")
+
+if not os.path.isdir(CORE_DIR):
+    print(f"[trk] ERROR: truck/core not found at {CORE_DIR}")
+    print("[trk] Make sure Asombi is installed correctly.")
+    sys.exit(1)
+
+sys.path.insert(0, CORE_DIR)
+
+HELP = f"""
+  ██╗    ██╗██╗███████╗███████╗ ██████╗ ██████╗
+  ██║    ██║██║╚══██╔╝╚══██╔╝██╔═══██╗██╔══██╗
+  ██║ █╗ ██║██║  ███╔╝   ███╔╝ ██║   ██║██████╔╝
+  ██║███╗██║██║ ██╔╝   ██╔╝  ██║   ██║██╔══██╗
+  ╚███╔███╔╝██║███████╗███████╗╚██████╔╝██║  ██║
+   ╚══╝╚══╝ ╚═╝╚══════╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝
+  Package Manager for Asombi OS  v{{VERSION}}
+
+Usage:
+  wiz install <package>     Install a package
+  wiz remove  <package>     Remove a package
+  wiz update  [package]     Update package(s)
+  wiz search  <query>       Search for packages
+  wiz list                  List installed packages
+  wiz info    <package>     Show package info
+  wiz repo    add <url>     Add a repository
+  wiz repo    remove <url>  Remove a repository
+  wiz repo    list          List repositories
+  wiz clean                 Clear cache
+  wiz version               Show version
+"""
+
+def main():
+    args = sys.argv[1:]
+
+    if not args or args[0] in ("-h", "--help", "help"):
+        print(HELP)
+        return
+
+    cmd = args[0]
+    rest = args[1:]
+
+    if cmd == "version":
+        print(f"Truck v{VERSION} | Asombi OS | ARM64/Android")
+        return
+
+    if cmd == "install":
+        from install import cmd_install
+        cmd_install(rest)
+    elif cmd == "remove":
+        from remove import cmd_remove
+        cmd_remove(rest)
+    elif cmd == "update":
+        from update import cmd_update
+        cmd_update(rest)
+    elif cmd == "search":
+        from search import cmd_search
+        cmd_search(rest)
+    elif cmd == "list":
+        from list_pkg import cmd_list
+        cmd_list(rest)
+    elif cmd == "info":
+        from info import cmd_info
+        cmd_info(rest)
+    elif cmd == "repo":
+        from repo import cmd_repo
+        cmd_repo(rest)
+    elif cmd == "clean":
+        from clean import cmd_clean
+        cmd_clean()
+    else:
+        print(f"[trk] Unknown command: '{cmd}'")
+        print("Run 'trk help' for usage.")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
