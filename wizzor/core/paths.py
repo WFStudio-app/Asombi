@@ -36,8 +36,7 @@ INSTALLED_DB  = os.path.join(DATA_DIR, "installed.json")
 SOURCES_FILE  = os.path.join(DATA_DIR, "sources.list")
 INSTANCES_FILE = os.path.join(DATA_DIR, "instances.json")
 
-# Для совместимости — старый ~/.wizzor теперь внутри Asombi
-WIZ_DIR = ASOMBI_ROOT  # псевдоним для старого кода
+WIZ_DIR = ASOMBI_ROOT
 
 
 def instance_rootfs(name: str) -> str:
