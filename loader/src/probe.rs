@@ -1,105 +1,86 @@
-//! Probe — определяем что поддерживает Android kernel
-//! Пробуем каждый syscall и запоминаем результат без краша
-
-use libc::{syscall, SYS_mount, SYS_unshare,
-           SYS_chroot, SYS_pivot_root, CLONE_NEWNS, EINVAL, EPERM, ENOSYS};
+use libc::{syscall, SYS_unshare, SYS_mount, SYS_chroot, SYS_pivot_root, CLONE_NEWNS, CLONE_NEWUSER, CLONE_NEWPID, CLONE_NEWUTS, CLONE_NEWIPC};
 use std::ffi::CString;
 
-/// Что умеет этот Android kernel
 #[derive(Debug, Clone)]
 pub struct KernelCapabilities {
-    pub has_mount:      bool, // SYS_mount работает
-    pub has_chroot:     bool, // SYS_chroot доступен
-    pub has_unshare:    bool, // mount namespace isolation
-    pub has_pivot_root: bool, // полная смена root
-    pub has_clone_ns:   bool, // CLONE_NEWNS (новый namespace)
-    pub android_api:    u32,  // версия Android API
-    pub arch:           &'static str,
+    pub has_user_ns:  bool,
+    pub has_mount_ns: bool,
+    pub has_pid_ns:   bool,
+    pub has_uts_ns:   bool,
+    pub has_ipc_ns:   bool,
+    pub has_mount:    bool,
+    pub has_chroot:   bool,
+    pub has_pivot:    bool,
+    pub android_api:  u32,
+    pub arch:         &'static str,
 }
 
 impl KernelCapabilities {
-    /// Пробуем каждый syscall — не крашимся, просто запоминаем
     pub fn detect() -> Self {
         KernelCapabilities {
-            has_mount:      Self::probe_mount(),
-            has_chroot:     Self::probe_chroot(),
-            has_unshare:    Self::probe_unshare(),
-            has_pivot_root: Self::probe_pivot_root(),
-            has_clone_ns:   Self::probe_clone_ns(),
-            android_api:    Self::detect_android_api(),
-            arch:           Self::detect_arch(),
+            has_user_ns:  Self::probe_user_ns(),
+            has_mount_ns: Self::probe_ns(CLONE_NEWNS),
+            has_pid_ns:   Self::probe_ns(CLONE_NEWPID),
+            has_uts_ns:   Self::probe_ns(CLONE_NEWUTS),
+            has_ipc_ns:   Self::probe_ns(CLONE_NEWIPC),
+            has_mount:    Self::probe_mount(),
+            has_chroot:   Self::probe_chroot(),
+            has_pivot:    Self::probe_pivot(),
+            android_api:  Self::detect_android_api(),
+            arch:         Self::detect_arch(),
         }
     }
 
-    /// Пробуем SYS_mount с заведомо неверными аргументами
-    /// EPERM = есть но нет прав, ENOSYS = нет совсем, EINVAL = есть
+    fn probe_user_ns() -> bool {
+        unsafe {
+            let ret = syscall(SYS_unshare, CLONE_NEWUSER);
+            let e = *libc::__errno_location();
+            ret == 0 || e == libc::EPERM as i32
+        }
+    }
+
+    fn probe_ns(flag: libc::c_int) -> bool {
+        unsafe {
+            let ret = syscall(SYS_unshare, flag);
+            let e = *libc::__errno_location();
+            ret == 0 || (e != libc::ENOSYS as i32 && e != libc::EINVAL as i32)
+        }
+    }
+
     fn probe_mount() -> bool {
         unsafe {
-            let src = CString::new("none").unwrap();
-            let tgt = CString::new("/proc").unwrap();
-            let fs  = CString::new("proc").unwrap();
-            let ret = syscall(SYS_mount,
-                src.as_ptr(), tgt.as_ptr(), fs.as_ptr(), 0usize, 0usize);
-            // ENOSYS = точно нет, остальное = есть (включая EPERM)
-            let err = *libc::__errno_location();
-            ret == 0 || err != ENOSYS as i32
+            let s = CString::new("none").unwrap();
+            let t = CString::new("/proc").unwrap();
+            let f = CString::new("proc").unwrap();
+            syscall(SYS_mount, s.as_ptr(), t.as_ptr(), f.as_ptr(), 0usize, 0usize);
+            *libc::__errno_location() != libc::ENOSYS as i32
         }
     }
 
     fn probe_chroot() -> bool {
         unsafe {
-            let path = CString::new("/nonexistent_asombi_probe").unwrap();
-            syscall(SYS_chroot, path.as_ptr());
-            let err = *libc::__errno_location();
-            err != ENOSYS as i32
+            let p = CString::new("/nonexistent_asombi_probe").unwrap();
+            syscall(SYS_chroot, p.as_ptr());
+            *libc::__errno_location() != libc::ENOSYS as i32
         }
     }
 
-    fn probe_unshare() -> bool {
+    fn probe_pivot() -> bool {
         unsafe {
-            // Пробуем unshare с 0 — минимальный эффект
-            let ret = syscall(SYS_unshare, 0i32);
-            let err = *libc::__errno_location();
-            ret == 0 || (err != ENOSYS as i32 && err != EINVAL as i32)
-        }
-    }
-
-    fn probe_pivot_root() -> bool {
-        unsafe {
-            let new = CString::new("/").unwrap();
-            let old = CString::new("/").unwrap();
-            syscall(SYS_pivot_root, new.as_ptr(), old.as_ptr());
-            let err = *libc::__errno_location();
-            err != ENOSYS as i32
-        }
-    }
-
-    fn probe_clone_ns() -> bool {
-        unsafe {
-            // Пробуем unshare(CLONE_NEWNS)
-            let ret = syscall(SYS_unshare, CLONE_NEWNS);
-            let err = *libc::__errno_location();
-            ret == 0 || err == EPERM as i32 // EPERM = есть но нет прав
+            let p = CString::new("/").unwrap();
+            syscall(SYS_pivot_root, p.as_ptr(), p.as_ptr());
+            *libc::__errno_location() != libc::ENOSYS as i32
         }
     }
 
     fn detect_android_api() -> u32 {
-        // Читаем из /proc/version или system properties
-        if let Ok(v) = std::fs::read_to_string("/proc/version") {
-            if v.contains("android") || v.contains("Android") {
-                // Пробуем найти API level
-                if let Ok(p) = std::fs::read_to_string(
-                    "/system/build.prop"
-                ) {
-                    for line in p.lines() {
-                        if line.starts_with("ro.build.version.sdk=") {
-                            if let Ok(n) = line[21..].parse::<u32>() {
-                                return n;
-                            }
-                        }
+        if let Ok(p) = std::fs::read_to_string("/system/build.prop") {
+            for line in p.lines() {
+                if line.starts_with("ro.build.version.sdk=") {
+                    if let Ok(n) = line[21..].parse::<u32>() {
+                        return n;
                     }
                 }
-                return 0; // Android но версию не нашли
             }
         }
         0
@@ -108,66 +89,61 @@ impl KernelCapabilities {
     fn detect_arch() -> &'static str {
         #[cfg(target_arch = "aarch64")] { "aarch64" }
         #[cfg(target_arch = "x86_64")]  { "x86_64"  }
-        #[cfg(target_arch = "arm")]      { "armv7"   }
+        #[cfg(target_arch = "arm")]     { "armv7"   }
         #[cfg(not(any(
             target_arch = "aarch64",
             target_arch = "x86_64",
             target_arch = "arm"
-        )))]
-        { "unknown" }
+        )))] { "unknown" }
     }
 
-    pub fn print_report(&self) {
-        println!("\n  ── Kernel Capabilities ──────────────────");
-        println!("  arch:        {}", self.arch);
-        if self.android_api > 0 {
-            println!("  android api: {}", self.android_api);
-        }
-        Self::print_cap("mount",      self.has_mount);
-        Self::print_cap("chroot",     self.has_chroot);
-        Self::print_cap("unshare",    self.has_unshare);
-        Self::print_cap("pivot_root", self.has_pivot_root);
-        Self::print_cap("clone_ns",   self.has_clone_ns);
-        println!("  ─────────────────────────────────────────\n");
-    }
-
-    fn print_cap(name: &str, val: bool) {
-        let (sym, col) = if val {
-            ("✓", "\x1b[92m")
-        } else {
-            ("✗", "\x1b[91m")
-        };
-        println!("  {col}{sym}\x1b[0m  {name}");
-    }
-
-    /// Выбираем стратегию запуска исходя из возможностей
     pub fn strategy(&self) -> Strategy {
-        if self.has_unshare && self.has_mount && self.has_chroot {
-            Strategy::Native
+        if self.has_user_ns && self.has_mount_ns {
+            Strategy::UserNamespace
+        } else if self.has_mount && self.has_chroot {
+            Strategy::MountChroot
         } else if self.has_chroot {
-            Strategy::Chroot
+            Strategy::ChrootOnly
         } else {
             Strategy::BindOnly
         }
+    }
+
+    pub fn print_report(&self) {
+        println!("\n  Kernel Capabilities");
+        println!("  arch: {}  android_api: {}", self.arch, self.android_api);
+        Self::cap("user_namespace",  self.has_user_ns);
+        Self::cap("mount_namespace", self.has_mount_ns);
+        Self::cap("pid_namespace",   self.has_pid_ns);
+        Self::cap("uts_namespace",   self.has_uts_ns);
+        Self::cap("ipc_namespace",   self.has_ipc_ns);
+        Self::cap("mount",           self.has_mount);
+        Self::cap("chroot",          self.has_chroot);
+        Self::cap("pivot_root",      self.has_pivot);
+        println!("  strategy: {}\n", self.strategy());
+    }
+
+    fn cap(name: &str, val: bool) {
+        let sym = if val { "\x1b[92m✓\x1b[0m" } else { "\x1b[91m✗\x1b[0m" };
+        println!("  {}  {}", sym, name);
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Strategy {
-    /// Полная изоляция: unshare + mount + chroot
-    Native,
-    /// Только chroot без namespace
-    Chroot,
-    /// Минимальный режим: только bind mounts, без chroot
+    UserNamespace,
+    MountChroot,
+    ChrootOnly,
     BindOnly,
 }
 
 impl std::fmt::Display for Strategy {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Strategy::Native   => write!(f, "Native (full isolation)"),
-            Strategy::Chroot   => write!(f, "Chroot (no namespace)"),
-            Strategy::BindOnly => write!(f, "BindOnly (minimal)"),
+            Strategy::UserNamespace => write!(f, "UserNamespace (fastest, no root needed)"),
+            Strategy::MountChroot   => write!(f, "MountChroot (root required)"),
+            Strategy::ChrootOnly    => write!(f, "ChrootOnly (root required)"),
+            Strategy::BindOnly      => write!(f, "BindOnly (minimal)"),
         }
     }
 }
