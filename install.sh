@@ -90,7 +90,7 @@ fi
 # Если install.sh запущен из уже клонированной папки Asombi —
 # используем её, не клонируем заново.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-if [ -f "${SCRIPT_DIR}/bin/os" ] && [ -f "${SCRIPT_DIR}/bin/wiz" ]; then
+if [ -f "${SCRIPT_DIR}/bin/os" ] && [ -f "${SCRIPT_DIR}/bin/trk" ]; then
     # Запущен из клонированной папки — просто линкуем отсюда
     if [ "${SCRIPT_DIR}" != "${ASOMBI_DIR}" ]; then
         info "Using existing clone at ${SCRIPT_DIR}"
@@ -123,8 +123,8 @@ fi
 
 # ── Проверка файлов ──────────────────────────────────────────────
 [ -f "${ASOMBI_DIR}/bin/os"  ] || err "bin/os not found"
-[ -f "${ASOMBI_DIR}/bin/wiz" ] || err "bin/wiz not found"
-chmod +x "${ASOMBI_DIR}/bin/os" "${ASOMBI_DIR}/bin/wiz"
+[ -f "${ASOMBI_DIR}/bin/trk" ] || err "bin/trk not found"
+chmod +x "${ASOMBI_DIR}/bin/os" "${ASOMBI_DIR}/bin/trk"
 
 # ── БАГ 6 ФИКС: симлинки не перезаписывают чужие файлы ──────────
 for CMD in os wiz; do
