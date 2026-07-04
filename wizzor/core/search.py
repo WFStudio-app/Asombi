@@ -28,5 +28,7 @@ def cmd_search(args):
 
     for name, pkg in sorted(results.items()):
         status = c("green", " [installed]") if name in installed else ""
-        print(f"  {c('bold', name)} v{pkg.get('version', '?{status}}")
+        ver = pkg.get("version", "?")
+        # БАГ 1 ФИКС: незакрытая кавычка была здесь
+        print(f"  {c('bold', name)} v{ver}{status}")
         print(f"    {pkg.get('description', 'No description')}\n")
