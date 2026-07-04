@@ -1,22 +1,29 @@
-//! Loader — запускаем процесс внутри rootfs
-
 use crate::probe::{KernelCapabilities, Strategy};
-use crate::mount;
+use crate::namespace;
 use std::ffi::CString;
 
 pub fn launch(rootfs: &str, cmd_args: &[String], caps: &KernelCapabilities) -> Result<(), String> {
-    let strategy = caps.strategy();
-    println!("  [loader] Strategy: {}", strategy);
+    println!("  [loader] Strategy: {}", caps.strategy());
 
-    mount::setup_rootfs(rootfs).map_err(|e| e.to_string())?;
-
-    match strategy {
-        Strategy::Native | Strategy::Chroot => {
-            mount::do_chroot(rootfs).map_err(|e| e.to_string())?;
+    match caps.strategy() {
+        Strategy::UserNamespace => {
+            namespace::setup_user_namespace()
+                .map_err(|e| e.to_string())?;
+            namespace::setup_rootfs(rootfs)
+                .map_err(|e| e.to_string())?;
+            namespace::do_pivot_root(rootfs)
+                .map_err(|e| e.to_string())?;
+        }
+        Strategy::MountChroot | Strategy::ChrootOnly => {
+            namespace::setup_rootfs(rootfs)
+                .map_err(|e| e.to_string())?;
+            namespace::do_chroot(rootfs)
+                .map_err(|e| e.to_string())?;
         }
         Strategy::BindOnly => {
-            println!("  [loader] ! chroot unavailable — using bind-only mode");
-            println!("  [loader] ! Some filesystem paths may differ");
+            namespace::setup_rootfs(rootfs)
+                .map_err(|e| e.to_string())?;
+            eprintln!("  [!] Running without chroot — limited isolation");
         }
     }
 
@@ -30,7 +37,7 @@ fn exec(cmd_args: &[String]) -> Result<(), String> {
 
     let env_vars = [
         "TERM=xterm-256color",
-        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin",
         "SHELL=/bin/sh",
         "USER=root",
         "HOME=/root",
@@ -45,7 +52,6 @@ fn exec(cmd_args: &[String]) -> Result<(), String> {
         .chain(std::iter::once(std::ptr::null()))
         .collect();
 
-    // Все аргументы команды (argv[0] = путь, остальное = аргументы)
     let arg_cstrings: Vec<CString> = cmd_args.iter()
         .map(|s| CString::new(s.as_str()).unwrap())
         .collect();
@@ -56,7 +62,7 @@ fn exec(cmd_args: &[String]) -> Result<(), String> {
 
     unsafe {
         libc::execve(path.as_ptr(), argv_ptrs.as_ptr(), env_ptrs.as_ptr());
-        let err = *libc::__errno_location();
-        Err(format!("execve failed: errno {}", err))
+        let e = *libc::__errno_location();
+        Err(format!("execve failed: errno {}", e))
     }
 }
