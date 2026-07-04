@@ -96,11 +96,10 @@ if [ -f "${SCRIPT_DIR}/bin/os" ] && [ -f "${SCRIPT_DIR}/bin/wiz" ]; then
         info "Using existing clone at ${SCRIPT_DIR}"
         # Создаём симлинк на папку чтобы os/wiz всегда были в ASOMBI_DIR
         mkdir -p "${INSTALL_DIR}"
-        ln -sfn "${SCRIPT_DIR}" "${ASOMBI_DIR}" 2>/dev/null || {
-            # Если симлинк не создался — копируем
-            rsync -a --delete "${SCRIPT_DIR}/" "${ASOMBI_DIR}/" 2>/dev/null \
-                || cp -r "${SCRIPT_DIR}/." "${ASOMBI_DIR}/"
-        }
+        # БАГ 3+4 ФИКС: ln -sfn не работает в busybox, rsync может не быть
+        rm -rf "${ASOMBI_DIR}" 2>/dev/null || true
+        ln -sf "${SCRIPT_DIR}" "${ASOMBI_DIR}" 2>/dev/null \
+            || cp -r "${SCRIPT_DIR}/." "${ASOMBI_DIR}/"
         ok "Linked existing clone"
     fi
 elif [ -d "${ASOMBI_DIR}/.git" ]; then
