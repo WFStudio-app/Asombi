@@ -1,5 +1,5 @@
 name: "Bug Report"
-description: "Report a bug in Asombi OS or Wizzor"
+description: "Report a bug in Asombi OS or Truck"
 title: "[Bug]: "
 labels: ["bug"]
 body:
@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         Please search existing issues before opening a new one.
-        For package issues use the Wizzor repository, not this one.
+        For package issues use the Truck repository, not this one.
 
   - type: textarea
     id: description
@@ -24,7 +24,7 @@ body:
       description: Exact commands to reproduce the issue.
       placeholder: |
         1. Run 'os login asombi-1'
-        2. Run 'wiz install ...'
+        2. Run 'trk install ...'
         3. See error
     validations:
       required: true
