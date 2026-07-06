@@ -1,5 +1,5 @@
 name: "Feature Request"
-description: "Suggest a new feature for Asombi OS or Wizzor"
+description: "Suggest a new feature for Asombi OS or Truck"
 title: "[Feature]: "
 labels: ["enhancement"]
 body:
@@ -30,7 +30,7 @@ body:
     attributes:
       label: Area
       options:
-        - Wizzor (package manager)
+        - Truck (package manager)
         - OS core (os login / instances)
         - Alpine base
         - install.sh
