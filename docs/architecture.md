@@ -9,7 +9,7 @@ Android Device
     │   ├── proot            ← Linux container (no root needed)
     │   │   └── Alpine Linux rootfs
     │   │       ├── /bin /usr /etc  ← Real Linux filesystem
-    │   │       ├── /opt/wizzor     ← Wizzor package manager
+    │   │       ├── /opt/truck     ← Truck package manager
     │   │       └── /termux-home    ← Bind mount to Termux $HOME
     │   └── ~/.asombi/instances/<name>/rootfs/
     └── wiz (Python)         ← Can also run standalone in Termux
@@ -46,12 +46,12 @@ Integration planned for v0.2.00.
 Entry point. Manages instances, downloads Alpine rootfs on first boot,
 launches proot session.
 
-### `bin/wiz`
-Wizzor package manager. Works both inside Asombi and standalone in Termux.
-Reads sources from `~/.wizzor/sources.list`, stores installed packages in
-`~/.wizzor/installed.json`.
+### `bin/trk`
+Truck package manager. Works both inside Asombi and standalone in Termux.
+Reads sources from `~/.truck/sources.list`, stores installed packages in
+`~/.truck/installed.json`.
 
-### `wizzor/core/`
+### `truck/core/`
 Modular command handlers — one file per `wiz` subcommand.
 
 ### `packages/index.json`
@@ -67,10 +67,10 @@ Stored at `~/.asombi/instances/<name>/rootfs/`.
 |------|----------|
 | `~/.asombi/instances/<name>/rootfs/` | Alpine Linux filesystem |
 | `~/.asombi/instances.json` | Instance registry |
-| `~/.wizzor/installed.json` | Installed packages DB |
-| `~/.wizzor/sources.list` | Repository list |
-| `~/.wizzor/cache/` | Download cache |
-| `~/.wizzor/packages/` | Extracted packages |
+| `~/.truck/installed.json` | Installed packages DB |
+| `~/.truck/sources.list` | Repository list |
+| `~/.truck/cache/` | Download cache |
+| `~/.truck/packages/` | Extracted packages |
 
 ---
 
