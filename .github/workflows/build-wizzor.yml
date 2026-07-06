@@ -1,14 +1,14 @@
-name: Build Wizzor (Go)
+name: Build Truck (Go)
 
 on:
   push:
     branches: [main]
     paths:
-      - 'wizzor-go/**'
+      - 'truck-go/**'
   pull_request:
     branches: [main]
     paths:
-      - 'wizzor-go/**'
+      - 'truck-go/**'
 
 jobs:
   test:
@@ -20,7 +20,7 @@ jobs:
         with:
           go-version: "1.22"
       - name: Run tests
-        working-directory: wizzor-go
+        working-directory: truck-go
         run: go test ./... -v
 
   build:
@@ -51,13 +51,13 @@ jobs:
         with:
           go-version: "1.22"
       - name: Build
-        working-directory: wizzor-go
+        working-directory: truck-go
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
-        run: go build -o wiz-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }} ./cmd/wiz/
+        run: go build -o trk-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }} ./cmd/wiz/
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wiz-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: wizzor-go/wiz-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}
+          name: trk-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: wizzor-go/trk-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}
