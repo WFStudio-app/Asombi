@@ -16,17 +16,17 @@ pkg upgrade proot -y
 Download of Alpine rootfs may be slow. Wait up to 2 minutes.
 If it fails, check your internet connection and retry.
 
-### `wiz install` returns "No packages found"
+### `trk install` returns "No packages found"
 Your sources list may be empty or unreachable.
 ```bash
-wiz repo list
-wiz repo add https://raw.githubusercontent.com/WFStudio-app/Asombi/main/packages/index.toml
+trk repo list
+trk repo add https://raw.githubusercontent.com/WFStudio-app/Asombi/main/packages/index.toml
 ```
 
-### `Permission denied` on `bin/os` or `bin/wiz`
+### `Permission denied` on `bin/os` or `bin/trk`
 ```bash
 chmod +x ~/.asombi/Asombi/bin/os
-chmod +x ~/.asombi/Asombi/bin/wiz
+chmod +x ~/.asombi/Asombi/bin/trk
 ```
 
 ### Alpine package install fails (`apk add`)
