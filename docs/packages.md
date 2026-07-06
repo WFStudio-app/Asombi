@@ -1,4 +1,4 @@
-# Creating Wizzor Packages
+# Creating Truck Packages
 
 ## Package index format
 
@@ -45,7 +45,7 @@ pointing to a shell script inside your archive:
 
 ```bash
 #!/bin/sh
-# install.sh — runs after extraction inside ~/.wizzor/packages/<name>/
+# install.sh — runs after extraction inside ~/.truck/packages/<name>/
 ln -sf "$(pwd)/my-tool" "$PREFIX/bin/my-tool"
 ```
 
@@ -54,7 +54,7 @@ ln -sf "$(pwd)/my-tool" "$PREFIX/bin/my-tool"
 1. Host `index.json` anywhere (GitHub raw, your server, etc.)
 2. Users add it with:
 ```bash
-wiz repo add https://raw.githubusercontent.com/you/repo/main/index.json
+trk repo add https://raw.githubusercontent.com/you/repo/main/index.json
 ```
 
 ## Submitting to official index
