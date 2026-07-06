@@ -21,7 +21,7 @@ Thank you for your interest in contributing!
 | `refactor:` | Code refactor |
 | `chore:` | Maintenance |
 
-## Adding a Wizzor package
+## Adding a Truck package
 
 Add your package to `packages/index.json` following the existing format, then open a PR.
 
