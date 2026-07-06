@@ -30,7 +30,7 @@ os login test
 
 **Q: How do I install packages inside Asombi?**
 ```bash
-wiz install <package>   # Wizzor packages
+trk install <package>   # Truck packages
 apk add <package>       # Alpine native packages
 ```
 
@@ -39,16 +39,16 @@ Yes. Your Termux home is mounted at `/termux-home` inside every instance.
 
 ---
 
-## Wizzor
+## Truck
 
-**Q: Where does Wizzor download packages from?**
-From the official Asombi index and any repos you add with `wiz repo add <url>`.
+**Q: Where does Truck download packages from?**
+From the official Asombi index and any repos you add with `trk repo add <url>`.
 
 **Q: How do I publish my own package?**
-Host a JSON index file and add it: `wiz repo add https://your-server/index.json`
-See [docs/wizzor.md](wizzor.md) for the index format.
+Host a JSON index file and add it: `trk repo add https://your-server/index.json`
+See [docs/truck.md](truck.md) for the index format.
 
-**Q: Does Wizzor verify packages?**
+**Q: Does Truck verify packages?**
 Yes. SHA256 checksums are verified before installation if provided in the index.
 
 ---
