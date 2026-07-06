@@ -60,4 +60,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: trk-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: wizzor-go/trk-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}
+          path: truck-go/trk-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}
