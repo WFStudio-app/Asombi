@@ -232,6 +232,18 @@ static void cmd_login(const char *name) {
         boot_step("Configuring Asombi environment");
         write_profile(rootfs, name);
         write_resolv(rootfs);
+
+        boot_step("Installing Python3 for Truck");
+        {
+            char py_cmd[CMD_BUF];
+            xsnprintf(py_cmd, CMD_BUF,
+                "proot -r "%s" /bin/sh -c "
+                "'apk update -q 2>/dev/null && apk add --no-cache python3 -q 2>/dev/null'",
+                rootfs);
+            int _r = system(py_cmd);
+            (void)_r;
+        }
+
         install_truck(rootfs);
         boot_step("Installing Truck package manager");
         boot_step("Configuring network DNS");
