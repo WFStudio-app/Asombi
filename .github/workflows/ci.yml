@@ -17,8 +17,8 @@ jobs:
           python-version: "3.11"
       - name: Install flake8
         run: pip install flake8
-      - name: Lint wizzor/core and bin
-        run: flake8 wizzor/core/ bin/ --max-line-length=120 --ignore=E501,W503,E704
+      - name: Lint truck/core and bin
+        run: flake8 truck/core/ bin/ --max-line-length=120 --ignore=E501,W503,E704
 
   lint-shell:
     name: Shell (shellcheck)
