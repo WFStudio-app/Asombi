@@ -124,7 +124,7 @@ Current version: **0.1.11**
 Asombi/
 ├── bin/
 │   ├── os               ← Entry point
-│   └── wiz              ← Package manager
+│   └── trk              ← Package manager
 ├── truck/core/         ← Truck modules
 ├── packages/index.json  ← Official package index
 ├── assets/              ← Logo, fastfetch config
