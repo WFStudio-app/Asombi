@@ -8,7 +8,7 @@
 
 ## Reporting a vulnerability
 
-If you find a security vulnerability in Asombi OS or Wizzor, please **do not** open a public issue.
+If you find a security vulnerability in Asombi OS or Truck, please **do not** open a public issue.
 
 Instead, contact us privately:
 - GitHub: open a private security advisory in this repository
@@ -18,7 +18,7 @@ We will respond within 72 hours and issue a fix as soon as possible.
 
 ## Package security
 
-Wizzor verifies SHA256 checksums on every package download.
+Truck verifies SHA256 checksums on every package download.
 Always use trusted repositories and verify `sha256` fields in index files.
 
 © WFWorld
