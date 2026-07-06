@@ -166,7 +166,7 @@ def setup_inside(rootfs_dir, instance_name):
             "elif [ -f /root/.asombi/logo.txt ]; then\n"
             "    cat /root/.asombi/logo.txt\n"
             f"    echo '  Asombi OS v{VERSION}  |  {instance_name}'\n"
-            "    echo '  wiz help — packages  |  exit — logout'\n"
+            "    echo '  trk help — packages  |  exit — logout'\n"
             "fi\n"
         )
 
@@ -189,7 +189,7 @@ def setup_inside(rootfs_dir, instance_name):
                 os.makedirs(os.path.dirname(dst), exist_ok=True)
                 shutil.copy2(src, dst)
 
-    # Wizzor внутрь Alpine
+    
     wiz_dst_dir = os.path.join(rootfs_dir, "usr", "local", "bin")
     os.makedirs(wiz_dst_dir, exist_ok=True)
     wiz_src = os.path.join(ROOT_DIR, "bin", "trk")
@@ -204,7 +204,7 @@ def setup_inside(rootfs_dir, instance_name):
         shutil.rmtree(core_dst)
     shutil.copytree(core_src, core_dst)
 
-    # БАГ 5 ФИКС: вставляем нужный sys.path в начало wiz внутри Alpine
+    
     # вместо хрупкой замены строки которой может не быть
     with open(wiz_dst) as f:
         wiz_content = f.read()
@@ -236,7 +236,7 @@ def setup_inside(rootfs_dir, instance_name):
     with open(wiz_dst, "w") as f:
         f.write(fixed_content)
 
-    ok("Wizzor installed inside Alpine")
+    ok("Truck installed inside Alpine")
 
 
 def launch_proot(rootfs_dir):
@@ -291,7 +291,7 @@ def cmd_login(name):
 
         boot_sequence([
             "Configuring Alpine Linux",
-            "Installing Wizzor package manager",
+            "Installing Truck package manager",
             "Setting up Asombi environment",
             "Configuring network DNS",
         ])
