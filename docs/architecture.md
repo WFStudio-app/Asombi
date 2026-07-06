@@ -12,7 +12,7 @@ Android Device
     │   │       ├── /opt/truck     ← Truck package manager
     │   │       └── /termux-home    ← Bind mount to Termux $HOME
     │   └── ~/.asombi/instances/<name>/rootfs/
-    └── wiz (Python)         ← Can also run standalone in Termux
+    └── trk (Python)         ← Can also run standalone in Termux
 ```
 
 
@@ -52,7 +52,7 @@ Reads sources from `~/.truck/sources.list`, stores installed packages in
 `~/.truck/installed.json`.
 
 ### `truck/core/`
-Modular command handlers — one file per `wiz` subcommand.
+Modular command handlers — one file per `trk` subcommand.
 
 ### `packages/index.json`
 Official package repository index served from GitHub raw.
