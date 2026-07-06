@@ -1,72 +1,72 @@
-# Wizzor — Package Manager
+# Truck — Package Manager
 
-Wizzor is the built-in package manager for Asombi OS.
+Truck is the built-in package manager for Asombi OS.
 
 
 ## Implementation status
 
-Wizzor is currently being rewritten from Python to Go (`wizzor-go/`).
+Truck is currently being rewritten from Python to Go (`truck-go/`).
 
 | Command | Python (active) | Go (in progress) |
 |---------|----------------|------------------|
-| `wiz install` | ✅ Working | 🔜 Etap 3 |
-| `wiz remove` | ✅ Working | 🔜 Etap 3 |
-| `wiz update` | ✅ Working | 🔜 Etap 4 |
-| `wiz search` | ✅ Working | ✅ Done |
-| `wiz list` | ✅ Working | ✅ Done |
-| `wiz info` | ✅ Working | 🔜 Etap 3 |
-| `wiz repo` | ✅ Working | 🔜 Etap 4 |
-| `wiz clean` | ✅ Working | 🔜 Etap 3 |
-| `wiz version` | ✅ Working | ✅ Done |
+| `trk install` | ✅ Working | 🔜 Etap 3 |
+| `trk remove` | ✅ Working | 🔜 Etap 3 |
+| `trk update` | ✅ Working | 🔜 Etap 4 |
+| `trk search` | ✅ Working | ✅ Done |
+| `trk list` | ✅ Working | ✅ Done |
+| `trk info` | ✅ Working | 🔜 Etap 3 |
+| `trk repo` | ✅ Working | 🔜 Etap 4 |
+| `trk clean` | ✅ Working | 🔜 Etap 3 |
+| `trk version` | ✅ Working | ✅ Done |
 
-**Currently `bin/wiz` runs the Python version.** The Go binary will replace it
+**Currently `bin/trk` runs the Python version.** The Go binary will replace it
 when all commands reach parity.
 
 ## Commands
 
-### wiz install
+### trk install
 ```bash
-wiz install curl
-wiz install curl git python3
+trk install curl
+trk install curl git python3
 ```
 Downloads and installs packages including dependencies.
 
-### wiz remove
+### trk remove
 ```bash
-wiz remove curl
+trk remove curl
 ```
 
-### wiz update
+### trk update
 ```bash
-wiz update          # Update all packages
-wiz update curl     # Update specific package
+trk update          # Update all packages
+trk update curl     # Update specific package
 ```
 
-### wiz search
+### trk search
 ```bash
-wiz search http
+trk search http
 ```
 
-### wiz list
+### trk list
 ```bash
-wiz list
+trk list
 ```
 
-### wiz info
+### trk info
 ```bash
-wiz info curl
+trk info curl
 ```
 
-### wiz repo
+### trk repo
 ```bash
-wiz repo list
-wiz repo add https://example.com/repo/index.json
-wiz repo remove https://example.com/repo/index.json
+trk repo list
+trk repo add https://example.com/repo/index.json
+trk repo remove https://example.com/repo/index.json
 ```
 
-### wiz clean
+### trk clean
 ```bash
-wiz clean
+trk clean
 ```
 
 ## Repository index format
@@ -94,9 +94,9 @@ wiz clean
 
 | Path | Description |
 |------|-------------|
-| `~/.wizzor/installed.json` | Installed packages DB |
-| `~/.wizzor/sources.list` | Repository list |
-| `~/.wizzor/cache/` | Downloaded package cache |
-| `~/.wizzor/packages/` | Extracted packages |
+| `~/.truck/installed.json` | Installed packages DB |
+| `~/.truck/sources.list` | Repository list |
+| `~/.truck/cache/` | Downloaded package cache |
+| `~/.truck/packages/` | Extracted packages |
 
 © WFWorld
