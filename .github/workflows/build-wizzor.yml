@@ -57,7 +57,7 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
         run: go build -o trk-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }} ./cmd/wiz/
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: trk-${{ matrix.goos }}-${{ matrix.goarch }}
           path: truck-go/trk-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}
