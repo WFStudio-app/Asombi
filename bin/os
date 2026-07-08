@@ -240,8 +240,12 @@ def setup_inside(rootfs_dir, instance_name):
 
 
 def check_rootfs(rootfs_dir):
-    sh_path = os.path.join(rootfs_dir, 'bin', 'sh')
-    return os.path.exists(sh_path)
+    required = [
+        os.path.join(rootfs_dir, "bin", "sh"),
+        os.path.join(rootfs_dir, "etc"),
+        os.path.join(rootfs_dir, "usr"),
+    ]
+    return all(os.path.exists(p) for p in required)
 
 
 def launch_proot(rootfs_dir):
@@ -250,25 +254,33 @@ def launch_proot(rootfs_dir):
     if not home:
         err("HOME environment variable not set")
         sys.exit(1)
+    if not check_rootfs(rootfs_dir):
+        err(f"Rootfs is broken — /bin/sh missing in {rootfs_dir}")
+        warn("Delete this instance and recreate: os delete " + rootfs_dir.split("/")[-2])
+        return False
+
     cmd = [
-        "proot", "--kill-on-exit",
+        "proot",
+        "--kill-on-exit",
+        "--link2symlink",
+        "-0",
         "-r", rootfs_dir,
         "-b", "/dev",
         "-b", "/proc",
         "-b", "/sys",
         "-b", f"{home}:/termux-home",
-        "--link2symlink",
-        "-0",
         "-w", "/root",
         "/bin/sh", "-l",
     ]
     try:
         subprocess.run(cmd)
+        return True
     except FileNotFoundError:
         err("proot not found. Install: pkg install proot")
         sys.exit(1)
     except KeyboardInterrupt:
         pass
+    return True
 
 
 def cmd_login(name):
