@@ -296,17 +296,162 @@ def launch_proot(rootfs_dir):
     return True
 
 
+
+def check_network():
+    import socket
+    try:
+        socket.create_connection(("8.8.8.8", 53), timeout=5)
+        return True
+    except OSError:
+        return False
+
+
+def check_termux_mirror():
+    mirrors = [
+        "https://packages.termux.dev/apt/termux-main/",
+        "https://grimler.se/termux/termux-main/",
+        "https://termux.mentality.rip/termux-main/",
+    ]
+    import urllib.request
+    for mirror in mirrors:
+        try:
+            req = urllib.request.Request(mirror, method="HEAD",
+                                         headers={"User-Agent": "Asombi/0.2.00"})
+            with urllib.request.urlopen(req, timeout=5) as r:
+                if r.status == 200:
+                    return True, mirror
+        except Exception:
+            continue
+    return False, None
+
+
+def install_termux_deps():
+    deps = {
+        "git":   "git",
+        "python3": "python",
+        "proot": "proot",
+        "curl":  "curl",
+        "tar":   "tar",
+    }
+    missing = []
+    for binary, pkg in deps.items():
+        if not shutil.which(binary):
+            missing.append(pkg)
+    if not missing:
+        return True
+    warn(f"Missing Termux packages: {', '.join(missing)}")
+    info("Installing via pkg...")
+    ret = os.system(f"pkg install -y {' '.join(missing)} 2>/dev/null")
+    if ret != 0:
+        ret = os.system(f"apt-get install -y {' '.join(missing)} 2>/dev/null")
+    for binary, pkg in deps.items():
+        if not shutil.which(binary) and pkg in missing:
+            err(f"Failed to install: {pkg}")
+            return False
+    ok("All dependencies installed")
+    return True
+
+
+def preflight_checks():
+    print(f"\n  {c('bold', 'Pre-flight checks...')}\n")
+
+    # 1. Сеть
+    sys.stdout.write(f"  {c('dim', '[ .... ]')} Network connectivity")
+    sys.stdout.flush()
+    if check_network():
+        sys.stdout.write(f"\r  {c('green', '[  OK  ]')} Network connectivity\n")
+    else:
+        sys.stdout.write(f"\r  {c('red', '[ FAIL ]')} Network connectivity\n")
+        warn("No internet — some features may not work")
+
+    sys.stdout.flush()
+
+    # 2. Зеркало Termux
+    sys.stdout.write(f"  {c('dim', '[ .... ]')} Termux mirror")
+    sys.stdout.flush()
+    mirror_ok, mirror_url = check_termux_mirror()
+    if mirror_ok:
+        sys.stdout.write(f"\r  {c('green', '[  OK  ]')} Termux mirror ({mirror_url.split('/')[2]})\n")
+    else:
+        sys.stdout.write(f"\r  {c('yellow', '[  !!  ]')} Termux mirror unreachable — pkg may fail\n")
+    sys.stdout.flush()
+
+    # 3. Зависимости Termux
+    sys.stdout.write(f"  {c('dim', '[ .... ]')} Termux dependencies (git, python3, proot, curl)")
+    sys.stdout.flush()
+    if install_termux_deps():
+        sys.stdout.write(
+            f"\r  {c('green', '[  OK  ]')} Termux dependencies installed          \n")
+    else:
+        sys.stdout.write(
+            f"\r  {c('red', '[ FAIL ]')} Some dependencies missing                \n")
+        err("Cannot continue without required packages")
+        sys.exit(1)
+    sys.stdout.flush()
+
+    # 4. HOME
+    sys.stdout.write(f"  {c('dim', '[ .... ]')} HOME environment")
+    sys.stdout.flush()
+    home = os.environ.get("HOME", "")
+    if home and os.path.isdir(home):
+        sys.stdout.write(f"\r  {c('green', '[  OK  ]')} HOME = {home}\n")
+    else:
+        sys.stdout.write(f"\r  {c('red', '[ FAIL ]')} HOME not set or missing\n")
+        sys.exit(1)
+    sys.stdout.flush()
+
+    # 5. Целостность Asombi данных
+    sys.stdout.write(f"  {c('dim', '[ .... ]')} Asombi data integrity")
+    sys.stdout.flush()
+    ensure_dirs()
+    sys.stdout.write(f"\r  {c('green', '[  OK  ]')} Asombi directories OK\n")
+    sys.stdout.flush()
+
+    print()
+
+
+def integrity_check(rootfs_dir):
+    critical = [
+        (os.path.join(rootfs_dir, "bin", "sh"),   "shell (busybox)"),
+        (os.path.join(rootfs_dir, "etc"),          "/etc directory"),
+        (os.path.join(rootfs_dir, "usr"),          "/usr directory"),
+        (os.path.join(rootfs_dir, "tmp"),          "/tmp directory"),
+        (os.path.join(rootfs_dir, "etc", "profile"), "/etc/profile"),
+        (os.path.join(rootfs_dir, "etc", "resolv.conf"), "/etc/resolv.conf"),
+        (os.path.join(rootfs_dir, "usr", "local", "bin", "trk"), "Truck package manager"),
+    ]
+    optional = [
+        (os.path.join(rootfs_dir, "usr", "bin", "python3"), "Python3"),
+        (os.path.join(rootfs_dir, "usr", "bin", "curl"),    "curl"),
+        (os.path.join(rootfs_dir, "usr", "bin", "apk"),     "Alpine apk"),
+    ]
+
+    print(f"  {c('bold', 'Rootfs integrity check...')}\n")
+    broken = []
+    for path, desc in critical:
+        exists = os.path.exists(path)
+        if exists:
+            print(f"  {c('green', '✓')} {desc}")
+        else:
+            print(f"  {c('red', '✗')} {desc} — MISSING")
+            broken.append(desc)
+
+    for path, desc in optional:
+        exists = os.path.exists(path) or os.path.islink(path)
+        status = c("green", "✓") if exists else c("yellow", "!")
+        note = "" if exists else " (will be installed)"
+        print(f"  {status} {desc}{note}")
+
+    print()
+    return broken
+
+
 def cmd_login(name):
     print(BANNER)
     print(f"  {c('bold', 'Booting instance:')} {c('cyan', name)}\n")
 
-    if not check_proot():
-        warn("proot not found. Installing...")
-        os.system("pkg install proot -y 2>/dev/null")
-        if not check_proot():
-            err("Could not install proot. Run: pkg install proot")
-            sys.exit(1)
-    ok("proot found")
+    # Шаг 1: preflight — сеть, зеркала, зависимости Termux
+    preflight_checks()
 
     ensure_dirs()
     rootfs = instance_rootfs(name)
@@ -346,6 +491,28 @@ def cmd_login(name):
             "Mounting Alpine filesystem",
             "Starting session",
         ])
+
+    # Шаг 2: проверка целостности rootfs
+    broken = integrity_check(rootfs)
+    if broken:
+        warn(f"Missing critical components: {', '.join(broken)}")
+        warn("Attempting repair...")
+        if "shell (busybox)" in broken:
+            err("Rootfs is too broken to repair — recreating")
+            shutil.rmtree(rootfs, ignore_errors=True)
+            os.makedirs(rootfs, exist_ok=True)
+            err(f"Run: os login {name}  (fresh install)")
+            return
+        # Пробуем починить недостающие файлы через apk внутри rootfs
+        repair_cmd = (
+            f"proot --link2symlink -0 -r {rootfs} "
+            f"-b /dev -b /proc -b /sys "
+            f"/bin/sh -c 'apk update -q 2>/dev/null && "
+            f"apk add --no-cache python3 curl -q 2>/dev/null'"
+        )
+        os.system(repair_cmd)
+        setup_inside(rootfs, name)
+        ok("Repair complete")
 
     print(f"\n  {c('green', '✓')} Entering Asombi OS — {c('cyan', name)}\n")
     time.sleep(0.3)
