@@ -298,7 +298,6 @@ def launch_proot(rootfs_dir):
 
 
 def check_network():
-    import socket
     try:
         socket.create_connection(("8.8.8.8", 53), timeout=5)
         return True
@@ -312,7 +311,6 @@ def check_termux_mirror():
         "https://grimler.se/termux/termux-main/",
         "https://termux.mentality.rip/termux-main/",
     ]
-    import urllib.request
     for mirror in mirrors:
         try:
             req = urllib.request.Request(mirror, method="HEAD",
