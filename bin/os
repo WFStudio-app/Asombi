@@ -10,7 +10,7 @@ import subprocess
 import urllib.request
 import shutil
 
-VERSION = "0.1.00"
+VERSION = "0.2.00"
 
 _REAL_FILE = os.path.realpath(__file__)
 _BIN_DIR   = os.path.dirname(_REAL_FILE)
@@ -239,6 +239,11 @@ def setup_inside(rootfs_dir, instance_name):
     ok("Truck installed inside Alpine")
 
 
+def check_rootfs(rootfs_dir):
+    sh_path = os.path.join(rootfs_dir, 'bin', 'sh')
+    return os.path.exists(sh_path)
+
+
 def launch_proot(rootfs_dir):
     # HOME всегда корректен в Termux, не хардкодим путь
     home = os.environ.get("HOME", "")
@@ -252,6 +257,8 @@ def launch_proot(rootfs_dir):
         "-b", "/proc",
         "-b", "/sys",
         "-b", f"{home}:/termux-home",
+        "--link2symlink",
+        "-0",
         "-w", "/root",
         "/bin/sh", "-l",
     ]
@@ -317,7 +324,10 @@ def cmd_login(name):
 
     print(f"\n  {c('green', '✓')} Entering Asombi OS — {c('cyan', name)}\n")
     time.sleep(0.3)
-    launch_proot(rootfs)
+    result = launch_proot(rootfs)
+    if result is False:
+        warn("Rootfs was corrupted and removed. Run: os login " + name + " again to reinstall.")
+        return
     print(f"\n  {c('yellow', 'Session ended.')} Goodbye!\n")
 
 
