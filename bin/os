@@ -197,6 +197,19 @@ def setup_inside(rootfs_dir, instance_name):
     shutil.copy2(wiz_src, wiz_dst)
     os.chmod(wiz_dst, 0o755)
 
+    # python3 + curl внутри Alpine — нужны для trk
+    # Запускаем apk через proot внутрь только что распакованного rootfs
+    apk_cmd = (
+        f"proot --link2symlink -0 -r {rootfs_dir} "
+        f"-b /dev -b /proc -b /sys "
+        f"/bin/sh -c 'apk update -q 2>/dev/null && "
+        f"apk add --no-cache python3 curl -q 2>/dev/null'"
+    )
+    apk_ret = os.system(apk_cmd)
+    if apk_ret != 0:
+        warn("python3/curl install via apk failed — trk may not work")
+        warn("Inside Asombi run: apk add python3 curl")
+
     # truck/core внутрь Alpine
     core_src = os.path.join(ROOT_DIR, "truck", "core")
     core_dst = os.path.join(rootfs_dir, "opt", "truck", "core")
