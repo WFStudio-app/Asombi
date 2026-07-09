@@ -254,12 +254,16 @@ def setup_inside(rootfs_dir, instance_name):
 
 
 def check_rootfs(rootfs_dir):
-    required = [
-        os.path.join(rootfs_dir, "bin", "sh"),
-        os.path.join(rootfs_dir, "etc"),
-        os.path.join(rootfs_dir, "usr"),
-    ]
-    return all(os.path.exists(p) for p in required)
+    if not os.path.isdir(rootfs_dir):
+        return False
+    # lexists проверяет симлинки тоже (Alpine /bin/sh это симлинк на busybox)
+    sh = os.path.join(rootfs_dir, "bin", "sh")
+    busybox = os.path.join(rootfs_dir, "bin", "busybox")
+    etc = os.path.join(rootfs_dir, "etc")
+    usr = os.path.join(rootfs_dir, "usr")
+    has_shell = os.path.lexists(sh) or os.path.lexists(busybox)
+    has_dirs = os.path.isdir(etc) and os.path.isdir(usr)
+    return has_shell and has_dirs
 
 
 def launch_proot(rootfs_dir):
@@ -268,11 +272,6 @@ def launch_proot(rootfs_dir):
     if not home:
         err("HOME environment variable not set")
         sys.exit(1)
-    if not check_rootfs(rootfs_dir):
-        err(f"Rootfs is broken — /bin/sh missing in {rootfs_dir}")
-        warn("Delete this instance and recreate: os delete " + rootfs_dir.split("/")[-2])
-        return False
-
     cmd = [
         "proot",
         "--kill-on-exit",
@@ -411,13 +410,11 @@ def preflight_checks():
 
 def integrity_check(rootfs_dir):
     critical = [
-        (os.path.join(rootfs_dir, "bin", "sh"),   "shell (busybox)"),
-        (os.path.join(rootfs_dir, "etc"),          "/etc directory"),
-        (os.path.join(rootfs_dir, "usr"),          "/usr directory"),
-        (os.path.join(rootfs_dir, "tmp"),          "/tmp directory"),
-        (os.path.join(rootfs_dir, "etc", "profile"), "/etc/profile"),
+        (os.path.join(rootfs_dir, "bin", "sh"),         "shell (busybox)"),
+        (os.path.join(rootfs_dir, "etc"),                "/etc directory"),
+        (os.path.join(rootfs_dir, "usr"),                "/usr directory"),
+        (os.path.join(rootfs_dir, "etc", "profile"),     "/etc/profile"),
         (os.path.join(rootfs_dir, "etc", "resolv.conf"), "/etc/resolv.conf"),
-        (os.path.join(rootfs_dir, "usr", "local", "bin", "trk"), "Truck package manager"),
     ]
     optional = [
         (os.path.join(rootfs_dir, "usr", "bin", "python3"), "Python3"),
@@ -494,24 +491,24 @@ def cmd_login(name):
     # Шаг 2: проверка целостности rootfs
     broken = integrity_check(rootfs)
     if broken:
-        warn(f"Missing critical components: {', '.join(broken)}")
-        warn("Attempting repair...")
-        if "shell (busybox)" in broken:
-            err("Rootfs is too broken to repair — recreating")
-            shutil.rmtree(rootfs, ignore_errors=True)
-            os.makedirs(rootfs, exist_ok=True)
-            err(f"Run: os login {name}  (fresh install)")
-            return
-        # Пробуем починить недостающие файлы через apk внутри rootfs
+        critical_broken = [b for b in broken if b in (
+            "shell (busybox)", "/etc directory", "/usr directory"
+        )]
+        if critical_broken:
+            warn(f"Critical components missing: {', '.join(critical_broken)}")
+            warn("Rootfs may be incomplete — trying to repair via apk")
         repair_cmd = (
             f"proot --link2symlink -0 -r {rootfs} "
             f"-b /dev -b /proc -b /sys "
             f"/bin/sh -c 'apk update -q 2>/dev/null && "
-            f"apk add --no-cache python3 curl -q 2>/dev/null'"
+            f"apk add --no-cache python3 curl busybox -q 2>/dev/null'"
         )
-        os.system(repair_cmd)
+        ret = os.system(repair_cmd)
         setup_inside(rootfs, name)
-        ok("Repair complete")
+        if ret == 0:
+            ok("Repair complete")
+        else:
+            warn("Repair may have failed — attempting to boot anyway")
 
     print(f"\n  {c('green', '✓')} Entering Asombi OS — {c('cyan', name)}\n")
     time.sleep(0.3)
