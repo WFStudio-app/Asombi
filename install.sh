@@ -130,13 +130,29 @@ chmod 755 "${ASOMBI_DIR}/bin/trk"
 # ── БАГ 6 ФИКС: симлинки не перезаписывают чужие файлы ──────────
 for CMD in os trk; do
     TARGET="${BIN_DIR}/${CMD}"
-    if [ -e "${TARGET}" ] && [ ! -L "${TARGET}" ]; then
-        warn "${TARGET} exists and is not a symlink — skipping to avoid overwrite"
-        warn "Remove it manually if you want Asombi's ${CMD}: rm ${TARGET}"
-    else
-        ln -sf "${ASOMBI_DIR}/bin/${CMD}" "${TARGET}"
-        ok "Command registered: ${CMD}"
+    SRC="${ASOMBI_DIR}/bin/${CMD}"
+
+    if [ ! -f "${SRC}" ]; then
+        err "Source not found: ${SRC}"
+        continue
     fi
+
+    if [ -e "${TARGET}" ] && [ ! -L "${TARGET}" ]; then
+        warn "${TARGET} exists and is not a symlink — skipping"
+        warn "Remove manually: rm ${TARGET}"
+        continue
+    fi
+
+    rm -f "${TARGET}"
+
+    # Создаём wrapper-скрипт вместо симлинка
+    # Симлинки в Termux иногда теряют права +x
+    cat > "${TARGET}" << WRAPPER
+#!/bin/sh
+exec python3 "${SRC}" "\$@"
+WRAPPER
+    chmod 755 "${TARGET}"
+    ok "Command registered: ${CMD} -> ${SRC}"
 done
 
 echo ""
