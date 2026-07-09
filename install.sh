@@ -124,7 +124,8 @@ fi
 # ── Проверка файлов ──────────────────────────────────────────────
 [ -f "${ASOMBI_DIR}/bin/os"  ] || err "bin/os not found"
 [ -f "${ASOMBI_DIR}/bin/trk" ] || err "bin/trk not found"
-chmod +x "${ASOMBI_DIR}/bin/os" "${ASOMBI_DIR}/bin/trk"
+chmod 755 "${ASOMBI_DIR}/bin/os"
+chmod 755 "${ASOMBI_DIR}/bin/trk"
 
 # ── БАГ 6 ФИКС: симлинки не перезаписывают чужие файлы ──────────
 for CMD in os trk; do
