@@ -417,15 +417,16 @@ def integrity_check(rootfs_dir):
         (os.path.join(rootfs_dir, "etc", "resolv.conf"), "/etc/resolv.conf"),
     ]
     optional = [
-        (os.path.join(rootfs_dir, "usr", "bin", "python3"), "Python3"),
-        (os.path.join(rootfs_dir, "usr", "bin", "curl"),    "curl"),
-        (os.path.join(rootfs_dir, "usr", "bin", "apk"),     "Alpine apk"),
+        (os.path.join(rootfs_dir, "usr", "bin", "python3"),    "Python3"),
+        (os.path.join(rootfs_dir, "usr", "bin", "curl"),       "curl"),
+        (os.path.join(rootfs_dir, "usr", "bin", "apk"),        "Alpine apk"),
+        (os.path.join(rootfs_dir, "usr", "local", "bin", "trk"), "Truck (trk)"),
     ]
 
     print(f"  {c('bold', 'Rootfs integrity check...')}\n")
     broken = []
     for path, desc in critical:
-        exists = os.path.exists(path)
+        exists = os.path.lexists(path)
         if exists:
             print(f"  {c('green', '✓')} {desc}")
         else:
@@ -433,7 +434,7 @@ def integrity_check(rootfs_dir):
             broken.append(desc)
 
     for path, desc in optional:
-        exists = os.path.exists(path) or os.path.islink(path)
+        exists = os.path.lexists(path)
         status = c("green", "✓") if exists else c("yellow", "!")
         note = "" if exists else " (will be installed)"
         print(f"  {status} {desc}{note}")
