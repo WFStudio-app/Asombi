@@ -79,3 +79,39 @@ size = "26 MB"
 depends = ["openssl"]
 license = "GPL-2.0"
 
+
+[packages.shellcheck]
+version = "0.10.0"
+description = "Shell script static analysis tool — finds bugs in your shell scripts"
+url = "https://codeload.github.com/koalaman/shellcheck/tar.gz/refs/tags/v0.10.0"
+sha256 = ""
+size = "2 MB"
+depends = []
+license = "GPL-3.0"
+
+[packages.busybox]
+version = "1.36.1"
+description = "The Swiss Army Knife of embedded Linux — core Unix utilities"
+url = "https://codeload.github.com/mirror/busybox/tar.gz/refs/tags/1_36_1"
+sha256 = ""
+size = "3 MB"
+depends = []
+license = "GPL-2.0"
+
+[packages.nano]
+version = "8.1"
+description = "Small and friendly text editor"
+url = "https://codeload.github.com/nicowillis/nano/tar.gz/refs/tags/v8.1"
+sha256 = ""
+size = "1 MB"
+depends = []
+license = "GPL-3.0"
+
+[packages.wget]
+version = "1.24.5"
+description = "Network utility to retrieve files from the web"
+url = "https://codeload.github.com/mirror/wget/tar.gz/refs/tags/v1.24.5"
+sha256 = ""
+size = "1 MB"
+depends = []
+license = "GPL-3.0"
