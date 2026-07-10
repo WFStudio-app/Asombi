@@ -170,12 +170,15 @@ def download_file(url, dest, package_name=""):
                         h  = int(rem // 3600)
                         mn = int((rem % 3600) // 60)
                         sc = int(rem % 60)
+                        time_str = (
+                            str(h).zfill(2) + " h "
+                            + str(mn).zfill(2) + " min "
+                            + str(sc).zfill(2) + " sec"
+                        )
                         line_out = (
                             "\r  [" + str(pct).zfill(3) + "%]"
                             " Downloading " + label + "..."
-                            " " + str(h).zfill(2) + " h "
-                            + str(mn).zfill(2) + " min "
-                            + str(sc).zfill(2) + " sec   "
+                            " " + time_str + "   "
                         )
                     else:
                         done_mb = downloaded / (1024 * 1024)
