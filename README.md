@@ -23,7 +23,7 @@
 
 <h1 align="center">ASOMBI OS</h1>
 <p align="center">
-  Independent Linux environment · ARM64 · macOS · Windows · x86_64
+  Independent Linux environment · ARM64 · x86_64 · Android/Termux
 </p>
 <p align="center">
   <img src="https://img.shields.io/badge/Version-0.2.00-purple?style=flat-square"/>
@@ -34,9 +34,7 @@
 </p>
 <p align="center">
   <img src="https://img.shields.io/badge/Android%2FTermux-ARM64-green?style=flat-square&logo=android"/>
-  <img src="https://img.shields.io/badge/macOS-Intel%20%2F%20Apple%20Silicon-silver?style=flat-square&logo=apple"/>
   <img src="https://img.shields.io/badge/Linux-x86__64-blue?style=flat-square&logo=linux"/>
-  <img src="https://img.shields.io/badge/Windows-WSL2-blue?style=flat-square&logo=windows"/>
 </p>
 
 ---
@@ -59,10 +57,7 @@ asombi@asombi-root:~#
 |----------|--------|--------|
 | Android (Termux) ARM64 | proot | Supported |
 | Android (Termux) x86_64 | proot | Supported |
-| macOS Intel | Docker / Lima | Supported |
-| macOS Apple Silicon (M1/M2/M3) | Docker / Lima | Supported |
 | Linux x86_64 | proot / native | Supported |
-| Windows (WSL2) | WSL2 | Supported |
 
 ---
 
@@ -78,30 +73,9 @@ cd Asombi && bash install.sh
 os login asombi-1
 ```
 
-### macOS (Intel / Apple Silicon)
-
-```bash
-# Install Lima (lightweight VM, no Docker needed)
-brew install lima
-
-# Start Asombi
-curl -sL https://raw.githubusercontent.com/WFStudio-app/Asombi/main/install-macos.sh | bash
-os login asombi-1
-```
-
 ### Linux
 
 ```bash
-git clone https://github.com/WFStudio-app/Asombi.git
-cd Asombi && bash install.sh
-os login asombi-1
-```
-
-### Windows (WSL2)
-
-```powershell
-wsl --install
-# Then inside WSL2:
 git clone https://github.com/WFStudio-app/Asombi.git
 cd Asombi && bash install.sh
 os login asombi-1
