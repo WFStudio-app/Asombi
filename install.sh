@@ -18,41 +18,31 @@ echo ""
 echo "  Installing Asombi OS..."
 echo ""
 
-# ── Проверка архитектуры ─────────────────────────────────────────
+# ── Архитектура ──────────────────────────────────────────────────
 ARCH=$(uname -m)
 case "$ARCH" in
-    aarch64|arm64) ok "Architecture: ARM64 — fully supported" ;;
-    x86_64)        ok "Architecture: x86_64 — supported" ;;
-    armv7l|armv8l) warn "Architecture: $ARCH — 32-bit ARM, may have issues" ;;
+    aarch64|arm64) ok "Architecture: ARM64" ;;
+    x86_64)        ok "Architecture: x86_64" ;;
+    armv7l|armv8l) warn "Architecture: $ARCH — 32-bit, may have issues" ;;
     *)             err "Unsupported architecture: $ARCH" ;;
 esac
 
-# ── Проверка Termux ──────────────────────────────────────────────
+# ── Termux ───────────────────────────────────────────────────────
 if [ -z "$PREFIX" ] || [ ! -d "$PREFIX" ]; then
     err "Termux PREFIX not found. Please run inside Termux."
 fi
 ok "Termux environment detected"
 
-# ── Android 12+ Phantom Process Killer предупреждение ────────────
-ANDROID_VER=$(getprop ro.build.version.release 2>/dev/null || echo "0")
+# ── Android 12+ предупреждение ───────────────────────────────────
 ANDROID_SDK=$(getprop ro.build.version.sdk 2>/dev/null || echo "0")
 if [ "$ANDROID_SDK" -ge 31 ] 2>/dev/null; then
-    echo ""
-    warn "Android 12+ detected (API $ANDROID_SDK)"
-    warn "Phantom Process Killer may terminate long-running processes."
-    warn "If installation fails mid-way, go to:"
-    warn "  Developer Options → disable 'Phantom process killing'"
-    warn "  or run: adb shell device_config set_sync_disabled_for_tests persistent"
-    echo ""
+    warn "Android 12+ detected — Phantom Process Killer may interrupt install"
+    warn "If install fails: Developer Options → disable phantom process killing"
 fi
 
-# ── Python 3 — один вызов ────────────────────────────────────────
+# ── БАГ 5 ФИКС: один вызов python3 вместо трёх ──────────────────
 if command -v python3 >/dev/null 2>&1; then
-    PY_INFO=$(python3 -c "
-import sys
-v = sys.version_info
-print(f'{v.major}.{v.minor}', v.major, v.minor)
-")
+    PY_INFO=$(python3 -c "import sys; v=sys.version_info; print(f'{v.major}.{v.minor}', v.major, v.minor)")
     PY_VER=$(echo "$PY_INFO" | awk '{print $1}')
     PY_MAJ=$(echo "$PY_INFO" | awk '{print $2}')
     PY_MIN=$(echo "$PY_INFO" | awk '{print $3}')
@@ -77,26 +67,30 @@ else
     ok "Git installed"
 fi
 
-# ── proot ────────────────────────────────────────────────────────
+# ── proot — с проверкой версии ───────────────────────────────────
 if command -v proot >/dev/null 2>&1; then
-    ok "proot found"
+    PROOT_VER=$(proot --version 2>&1 | head -1 || echo "unknown")
+    ok "proot found: $PROOT_VER"
 else
     info "Installing proot..."
     pkg install proot -y || err "Failed to install proot"
     ok "proot installed"
 fi
 
-# ── БАГ 1 ФИКС: идемпотентное клонирование ──────────────────────
-# Если install.sh запущен из уже клонированной папки Asombi —
-# используем её, не клонируем заново.
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# ── БАГ 9 ФИКС: проверка свободного места ────────────────────────
+FREE_KB=$(df -k "${HOME}" 2>/dev/null | awk 'NR==2{print $4}' || echo "0")
+FREE_MB=$((FREE_KB / 1024))
+if [ "$FREE_MB" -lt 150 ]; then
+    err "Not enough disk space: ${FREE_MB}MB free, need at least 150MB"
+fi
+ok "Disk space: ${FREE_MB}MB free"
+
+# ── БАГ 1+2+8 ФИКС: клонирование с диагностикой ─────────────────
+SCRIPT_DIR="$(cd "$(dirname "$0")" 2>/dev/null && pwd)"
 if [ -f "${SCRIPT_DIR}/bin/os" ] && [ -f "${SCRIPT_DIR}/bin/trk" ]; then
-    # Запущен из клонированной папки — просто линкуем отсюда
     if [ "${SCRIPT_DIR}" != "${ASOMBI_DIR}" ]; then
         info "Using existing clone at ${SCRIPT_DIR}"
-        # Создаём симлинк на папку чтобы os/wiz всегда были в ASOMBI_DIR
         mkdir -p "${INSTALL_DIR}"
-        # Busybox-совместимый способ: rm + ln -sf
         rm -rf "${ASOMBI_DIR}" 2>/dev/null || true
         ln -sf "${SCRIPT_DIR}" "${ASOMBI_DIR}" 2>/dev/null \
             || cp -r "${SCRIPT_DIR}/." "${ASOMBI_DIR}/"
@@ -104,59 +98,64 @@ if [ -f "${SCRIPT_DIR}/bin/os" ] && [ -f "${SCRIPT_DIR}/bin/trk" ]; then
     fi
 elif [ -d "${ASOMBI_DIR}/.git" ]; then
     info "Updating existing installation..."
-    git -C "${ASOMBI_DIR}" pull --quiet \
-        || warn "Update failed, continuing with existing version"
+    git -C "${ASOMBI_DIR}" pull --quiet 2>&1 | head -5 \
+        || warn "Update failed — continuing with existing version"
     ok "Updated"
 elif [ -d "${ASOMBI_DIR}" ] && [ ! -d "${ASOMBI_DIR}/.git" ]; then
-    warn "Found broken installation at ${ASOMBI_DIR}, reinstalling..."
+    warn "Broken installation found — reinstalling"
     rm -rf "${ASOMBI_DIR}"
-    git clone "${REPO}" "${ASOMBI_DIR}" --quiet \
-        || err "Failed to clone repository"
+    mkdir -p "${INSTALL_DIR}"
+    info "Cloning Asombi..."
+    git clone "${REPO}" "${ASOMBI_DIR}" 2>&1 | tail -3 \
+        || err "Failed to clone — check internet connection"
     ok "Repository cloned"
 else
-    info "Cloning Asombi repository..."
     mkdir -p "${INSTALL_DIR}"
-    git clone "${REPO}" "${ASOMBI_DIR}" --quiet \
-        || err "Failed to clone repository"
+    info "Cloning Asombi..."
+    git clone "${REPO}" "${ASOMBI_DIR}" 2>&1 | tail -3 \
+        || err "Failed to clone — check internet connection"
     ok "Repository cloned"
 fi
 
-# ── Проверка файлов ──────────────────────────────────────────────
-[ -f "${ASOMBI_DIR}/bin/os"  ] || err "bin/os not found"
-[ -f "${ASOMBI_DIR}/bin/trk" ] || err "bin/trk not found"
+# ── БАГ 3 ФИКС: проверяем файлы перед chmod ─────────────────────
+[ -f "${ASOMBI_DIR}/bin/os"  ] || err "bin/os not found after clone"
+[ -f "${ASOMBI_DIR}/bin/trk" ] || err "bin/trk not found after clone"
+
 chmod 755 "${ASOMBI_DIR}/bin/os"
 chmod 755 "${ASOMBI_DIR}/bin/trk"
+find "${ASOMBI_DIR}/truck/core/" -name "*.py" -exec chmod 644 {} \; 2>/dev/null || true
+ok "Permissions set"
 
-# ── БАГ 6 ФИКС: симлинки не перезаписывают чужие файлы ──────────
+# ── БАГ 1 ФИКС: wrapper вместо симлинка — нет конфликтов ─────────
 for CMD in os trk; do
     TARGET="${BIN_DIR}/${CMD}"
     SRC="${ASOMBI_DIR}/bin/${CMD}"
 
     if [ ! -f "${SRC}" ]; then
         err "Source not found: ${SRC}"
-        continue
     fi
 
+    # Проверяем конфликт — если файл есть и не наш wrapper
     if [ -e "${TARGET}" ] && [ ! -L "${TARGET}" ]; then
-        warn "${TARGET} exists and is not a symlink — skipping"
-        warn "Remove manually: rm ${TARGET}"
-        continue
+        EXISTING_CONTENT=$(head -2 "${TARGET}" 2>/dev/null || echo "")
+        if echo "$EXISTING_CONTENT" | grep -q "asombi\|Asombi"; then
+            rm -f "${TARGET}"
+        else
+            warn "${TARGET} exists and belongs to another program — skipping"
+            warn "Remove manually if needed: rm ${TARGET}"
+            continue
+        fi
+    else
+        rm -f "${TARGET}"
     fi
 
-    rm -f "${TARGET}"
-
-    # Создаём wrapper-скрипт вместо симлинка
-    # Симлинки в Termux иногда теряют права +x
-    cat > "${TARGET}" << WRAPPER
-#!/bin/sh
-exec python3 "${SRC}" "\$@"
-WRAPPER
+    printf '#!/bin/sh\nexec python3 "%s" "$@"\n' "${SRC}" > "${TARGET}"
     chmod 755 "${TARGET}"
-    ok "Command registered: ${CMD} -> ${SRC}"
+    ok "Command registered: ${CMD}"
 done
 
 echo ""
-ok "Asombi OS installed successfully!"
+ok "Asombi OS installed!"
 echo ""
 echo "  Quick start:  os login asombi-1"
 echo "  Uninstall:    bash ${ASOMBI_DIR}/uninstall.sh"
