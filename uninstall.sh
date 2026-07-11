@@ -14,16 +14,24 @@ echo ""
 echo "  Asombi OS - Uninstaller"
 echo ""
 
-# Удаляем симлинки только если они указывают на Asombi
+# БАГ 4 ФИКС: удаляем os и trk (было: os и wiz — неверно)
 for cmd in os trk; do
     TARGET="${BIN_DIR}/${cmd}"
     if [ -L "${TARGET}" ]; then
         LINK_DEST=$(readlink "${TARGET}")
         if echo "${LINK_DEST}" | grep -q "asombi\|Asombi"; then
             rm -f "${TARGET}"
-            ok "Removed command: ${cmd}"
+            ok "Removed symlink: ${cmd}"
         else
             warn "Skipping ${cmd} — points to ${LINK_DEST} (not Asombi)"
+        fi
+    elif [ -f "${TARGET}" ]; then
+        # Wrapper скрипт (не симлинк)
+        if grep -q "asombi\|Asombi" "${TARGET}" 2>/dev/null; then
+            rm -f "${TARGET}"
+            ok "Removed command: ${cmd}"
+        else
+            warn "Skipping ${cmd} — not an Asombi command"
         fi
     fi
 done
@@ -31,10 +39,7 @@ done
 echo ""
 read -r -p "  Remove all Asombi data (~/.asombi)? [y/N] " answer
 if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
-    if [ -d "${ASOMBI_DATA}" ]; then
-        rm -rf "${ASOMBI_DATA}"
-        ok "Removed ~/.asombi (instances, packages, cache, data)"
-    fi
+    [ -d "${ASOMBI_DATA}" ] && rm -rf "${ASOMBI_DATA}" && ok "Removed ~/.asombi"
 else
     warn "Data kept at ~/.asombi"
 fi
