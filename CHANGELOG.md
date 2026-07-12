@@ -1,3 +1,48 @@
+## [0.2.00-beta] - 2026-07-13 — First Beta Release
+
+### Highlights
+- First public beta of Asombi OS
+- Wizzor renamed to **Truck** (`trk` command)
+- Boot layer rewritten in **C** (was Python) — faster startup
+- Custom **Rust loader** replacing proot (asombi-loader)
+- New ASCII logo
+
+### Added
+- `bin/os` rewritten in C — zero Python dependency for boot
+- `asombi-loader` (Rust) — direct Linux namespaces, no proot overhead
+- BIOS system (.bios command) — network, system, data, memory settings
+- `os delete` command — remove instances
+- Pre-flight checks before every login (network, mirror, deps)
+- Rootfs integrity check with auto-repair
+- New download progress bar: `[045%] Downloading packages... 00 h 02 min 13 sec`
+- macOS support via Lima VM (`install-macos.sh`)
+- New ASCII logo (small + large variants)
+- shellcheck, nano, wget, busybox added to package index
+- Centralized path system (`truck/core/paths.py`)
+- `os delete --all`, `os delete --full` commands
+
+### Fixed
+- proot `--link2symlink -0` flags — fixes Alpine symlinks
+- `check_rootfs` uses `lexists` — detects Alpine busybox symlinks correctly
+- Rootfs no longer deleted on integrity check failure — repair attempted
+- `bin/trk` IndentationError fixed
+- Python3 auto-installed via apk on first boot
+- All Wizzor/wiz references renamed to Truck/trk
+- `uninstall.sh` now removes correct commands (os + trk)
+- `install.sh` — single python3 subprocess call (was 3)
+- `install.sh` — disk space check before download
+- `install.sh` — git clone with diagnostics
+- TOML parser quoting bug fixed
+- Duplicate imports in `bin/os` removed
+
+### Stack
+- Boot: **C**
+- Package manager: **Python** (Go rewrite in progress)
+- Loader: **Rust**
+- Package index format: **TOML**
+
+---
+
 # Changelog
 
 Versioning system:
