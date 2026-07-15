@@ -69,6 +69,16 @@ def save_instances(data):
     with open(INSTANCES_FILE, "w") as f:
         json.dump(data, f, indent=2)
 
+def get_platform():
+    import platform
+    return platform.system().lower()
+
+def is_macos():
+    return get_platform() == "darwin"
+
+def is_linux():
+    return get_platform() == "linux"
+
 def get_arch():
     import platform
     m = platform.machine().lower()
@@ -76,6 +86,34 @@ def get_arch():
 
 def check_proot():
     return shutil.which("proot") is not None
+
+def check_lima():
+    return shutil.which("lima") is not None or shutil.which("limactl") is not None
+
+def launch_lima(rootfs_dir, instance_name):
+    info("macOS detected — using Lima VM")
+    if not check_lima():
+        err("Lima not found. Install: brew install lima")
+        err("Or run: bash install-macos.sh")
+        sys.exit(1)
+    ok("Lima found")
+    lima_cfg = os.path.join(os.path.expanduser("~"), ".lima", "asombi", "lima.yaml")
+    if not os.path.exists(lima_cfg):
+        warn("Lima config not found — run install-macos.sh first")
+        sys.exit(1)
+    cmd = ["lima", "sudo", "proot",
+           "--kill-on-exit", "--link2symlink", "-0",
+           "-r", rootfs_dir,
+           "-b", "/dev", "-b", "/proc", "-b", "/sys",
+           "-w", "/root",
+           "/bin/sh", "-l"]
+    try:
+        subprocess.run(cmd)
+    except FileNotFoundError:
+        err("Lima launch failed")
+        sys.exit(1)
+    except KeyboardInterrupt:
+        pass
 
 def boot_sequence(steps):
     for step in steps:
