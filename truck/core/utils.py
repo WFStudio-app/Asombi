@@ -14,7 +14,9 @@ from paths import (
 WIZ_DIR = ASOMBI_ROOT
 
 DEFAULT_REPOS = [
-    "https://raw.githubusercontent.com/WFStudio-app/Asombi/main/packages/index.toml"
+    "https://raw.githubusercontent.com/WFStudio-app/Asombi/main/packages/index.toml",
+    # AsomPacket — расширенный индекс: все upstream-версии пакетов (trk repo add не нужен)
+    "https://raw.githubusercontent.com/WFStudio-app/AsomPacket/main/index.toml",
 ]
 
 COLORS = {

@@ -1,3 +1,13 @@
+## [Unreleased]
+
+### Added
+- **AsomPacket** — отдельный репозиторий пакетов для Truck (`github.com/WFStudio-app/AsomPacket`):
+  огромный индекс `index.toml` — 23 пакета x все upstream-версии = 4260 записей с реальными URL (codeload tarballs по тегам)
+- `truck/core/utils.py`: AsomPacket-индекс добавлен в `DEFAULT_REPOS` — доступен из trk без ручного `repo add`
+- Скрипты регенерации индекса: `regen_index.py` + `gen_toml.py` (в репозитории AsomPacket)
+
+---
+
 ## [0.2.00-beta] - 2026-07-13 — First Beta Release
 
 ### Highlights
