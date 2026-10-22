@@ -121,8 +121,8 @@ static void write_profile(const char *rootfs, const char *name) {
         "export TERM=xterm-256color\n"
         "export LANG=en_US.UTF-8\n"
         "export PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin\n"
-        "PS1='\\[\\033[96m\\]asombi\\[\\033[0m\\]@\\[\\033[92m\\]asombi-root"
-        "\\[\\033[0m\\]:\\[\\033[93m\\]\\w\\[\\033[0m\\]# '\n"
+        "PS1='$(printf \"\033[96m\")asombi$(printf \"\033[0m\")@$(printf \"\033[92m\")asombi-root"
+        "$(printf \"\033[0m\"):$(printf \"\033[93m\")$(pwd)$(printf \"\033[0m\")# '\n"
         "export PS1\n"
         "for _f in /etc/profile.d/*.sh; do [ -r \"$_f\" ] && . \"$_f\"; done\n"
         "unset _f\n"
@@ -237,7 +237,7 @@ static void cmd_login(const char *name) {
         {
             char py_cmd[CMD_BUF];
             xsnprintf(py_cmd, CMD_BUF,
-                "proot -r "%s" /bin/sh -c "
+                "proot -r \"%s\" /bin/sh -c "
                 "'apk update -q 2>/dev/null && apk add --no-cache python3 -q 2>/dev/null'",
                 rootfs);
             int _r = system(py_cmd);
