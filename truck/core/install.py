@@ -7,7 +7,7 @@ from paths import CACHE_DIR, PACKAGES_DIR, ensure_dirs
 from utils import (
     c, ok, err, info, warn,
     fetch_all_packages, load_installed, save_installed,
-    download_file, sha256
+    download_file, sha256, resolve_package
 )
 
 
@@ -29,11 +29,17 @@ def cmd_install(args):
 def _install_one(name, pkgs, installed):
     print(f"\n{c('bold', 'Package:')} {c('cyan', name)}")
 
-    if name not in pkgs:
-        err(f"Package '{name}' not found in any repository.")
-        return
+    # Ищем в подключённых репозиториях (AsomPacket и др.),
+    # при отсутствии — fallback на crates.io.
+    from_crates = False
+    pkg = pkgs.get(name)
+    if pkg is None:
+        pkg, from_crates = resolve_package(name, pkgs)
+        if pkg is None:
+            err(f"Package '{name}' not found in any repository or on crates.io.")
+            return
+        pkgs[name] = pkg
 
-    pkg = pkgs[name]
     version = pkg.get("version", "?")
 
     if name in installed:
@@ -62,7 +68,11 @@ def _install_one(name, pkgs, installed):
         return
 
     ensure_dirs()
-    filename = os.path.basename(url.rstrip("/"))
+    if from_crates:
+        # crates.io отдаёт .crate (gzip tar) — сохраняем с понятным именем
+        filename = "{}-{}.crate".format(name, version)
+    else:
+        filename = os.path.basename(url.rstrip("/"))
     if not filename:
         err(f"Cannot determine filename from URL: {url}")
         return
@@ -89,7 +99,7 @@ def _install_one(name, pkgs, installed):
 
     info("Extracting...")
     try:
-        if filename.endswith((".tar.gz", ".tgz", ".tar.xz", ".tar.bz2")):
+        if filename.endswith((".tar.gz", ".tgz", ".tar.xz", ".tar.bz2", ".crate")):
             with tarfile.open(cache_path) as tar:
                 safe = []
                 for m in tar.getmembers():

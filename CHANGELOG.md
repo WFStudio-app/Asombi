@@ -5,6 +5,8 @@
   огромный индекс `index.toml` — 23 пакета x все upstream-версии = 4260 записей с реальными URL (codeload tarballs по тегам)
 - `truck/core/utils.py`: AsomPacket-индекс добавлен в `DEFAULT_REPOS` — доступен из trk без ручного `repo add`
 - Скрипты регенерации индекса: `regen_index.py` + `gen_toml.py` (в репозитории AsomPacket)
+- **crates.io fallback**: если пакет не найден ни в одном подключённом репозитории, trk автоматически обращается к crates.io
+  (`trk install <crate>` скачивает .crate tarball последней версии; `trk info` показывает источник; `trk search` ищет на crates.io при пустом результате)
 
 ---
 

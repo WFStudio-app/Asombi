@@ -213,7 +213,13 @@ def sha256(path):
     return h.hexdigest()
 
 
-def fetch_all_packages():
+_ALL_PKGS_CACHE = None
+
+
+def fetch_all_packages(force=False):
+    global _ALL_PKGS_CACHE
+    if _ALL_PKGS_CACHE is not None and not force:
+        return _ALL_PKGS_CACHE
     sources = load_sources()
     all_pkgs = {}
     for url in sources:
@@ -231,4 +237,61 @@ def fetch_all_packages():
                 name = section[len("packages."):]
                 if name:
                     all_pkgs[name] = values
+    _ALL_PKGS_CACHE = all_pkgs
     return all_pkgs
+
+
+# ---------------------------------------------------------------------------
+# crates.io fallback
+# Если пакет не найден ни в одном репозитории (AsomPacket и др.), trk
+# обращается к crates.io и использует последний опубликованный crate
+# (.crate tarball = source package).
+# ---------------------------------------------------------------------------
+
+CRATES_API = "https://crates.io/api/v1/crates"
+CRATES_DL = "https://crates.io/api/v1/crates/{}/{}"
+
+
+def crates_lookup(name):
+    """Return a Truck-style pkg dict for the latest crates.io version."""
+    data = fetch_json(CRATES_API + "/" + urllib.request.quote(name))
+    if not data or "crate" not in data:
+        return None
+    cinfo = data["crate"]
+    ver = cinfo.get("newest_version") or cinfo.get("max_stable_version")
+    if not ver:
+        return None
+    vdata = fetch_json("{}/{}/{}".format(CRATES_API, urllib.request.quote(name),
+                                         urllib.request.quote(ver)))
+    checksum = ""
+    size = "unknown"
+    if vdata and "version" in vdata:
+        checksum = vdata["version"].get("checksum", "")
+        bytes_ = vdata["version"].get("crate_size")
+        if bytes_:
+            size = "{} KB".format(round(bytes_ / 1024, 1))
+    slug = "{}-{}".format(name, ver)
+    return {
+        "name": slug,
+        "version": ver,
+        "description": cinfo.get("description") or "Rust crate from crates.io",
+        "url": CRATES_DL.format(urllib.request.quote(name),
+                                urllib.request.quote(ver)),
+        "sha256": checksum,
+        "size": size,
+        "license": cinfo.get("license") or "unknown",
+        "source": "crates.io",
+    }
+
+
+def resolve_package(name, pkgs):
+    """Look up a package in fetched indexes; fall back to crates.io."""
+    pkg = pkgs.get(name)
+    if pkg:
+        return pkg, False
+    info("Not found in repositories, checking crates.io...")
+    pkg = crates_lookup(name)
+    if pkg:
+        ok("Found '{}' v{} on crates.io".format(name, pkg["version"]))
+        return pkg, True
+    return None, False

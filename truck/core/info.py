@@ -1,4 +1,4 @@
-from utils import err, c, fetch_all_packages, load_installed
+from utils import err, c, fetch_all_packages, load_installed, resolve_package
 
 
 def cmd_info(args):
@@ -10,9 +10,10 @@ def cmd_info(args):
     pkgs = fetch_all_packages()
     installed = load_installed()
 
-    pkg = pkgs.get(name)
+    # Fallback: если не найдено в репозиториях — спрашиваем crates.io
+    pkg, from_crates = resolve_package(name, pkgs)
     if not pkg:
-        err(f"Package '{name}' not found.")
+        err(f"Package '{name}' not found (repositories or crates.io).")
         return
 
     inst   = installed.get(name)
@@ -29,4 +30,5 @@ def cmd_info(args):
   {c('bold', 'Size:')}        {pkg.get('size', 'unknown')}
   {c('bold', 'Depends:')}     {deps_str}
   {c('bold', 'License:')}     {pkg.get('license', 'unknown')}
+  {c('bold', 'Source:')}      {'crates.io (fallback)' if from_crates else pkg.get('source', 'repository index')}
 """)
