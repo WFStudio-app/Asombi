@@ -108,6 +108,10 @@ trk clean               # Clear cache
 
 ---
 
+![Asombi](assets/Picsart_26-10-23_11-52-09-649.png)
+
+---
+
 ## Architecture
 
 ```
