@@ -1,6 +1,8 @@
 ## [Unreleased]
 
 ### Added
+- **Truck TypeScript-модуль** (`truck/ts`, пакет `@asombi/truck-index`): порт индекс-ядра utils.py (парсер TOML, versionKey/selectVersion, crates.io fallback, поиск) + CLI `trk-ts` (search/info/versions/stats); 10 unit-тестов, эквивалентность Python-ядру проверена кросс-запуском на живом индексе AsomPacket
+- **docs/truck-migration.md** — аудит модулей Truck и план замены устаревших частей на C++/Rust/TypeScript
 - **AsomPacket** — отдельный репозиторий пакетов для Truck (`github.com/WFStudio-app/AsomPacket`):
   огромный индекс `index.toml` — 23 пакета x все upstream-версии = 4260 записей с реальными URL (codeload tarballs по тегам)
 - `truck/core/utils.py`: AsomPacket-индекс добавлен в `DEFAULT_REPOS` — доступен из trk без ручного `repo add`

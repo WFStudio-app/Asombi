@@ -18,3 +18,5 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+truck/ts/node_modules/
+truck/ts/dist/
