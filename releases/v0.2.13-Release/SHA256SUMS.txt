@@ -1,0 +1,3 @@
+512a82c47b6df08de792f3f67c393f5494fd43a4357dfe93f19719bc13b70b21  releases/v0.2.13-Release/asombi-0.2.13-source.tar.gz
+40eba053b703f818ca893b066db1156d21ce5f5ca82f412a546198ce9f0baaa7  releases/v0.2.13-Release/asombi-0.2.13-source.zip
+6ca2437de8b4af0d90b7e77e6b35bdb493260267cc42846b78eb8bc37008fdbc  releases/v0.2.13-Release/asombi-0.2.13-termux.tar.gz
