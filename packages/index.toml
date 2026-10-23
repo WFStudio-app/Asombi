@@ -121,9 +121,9 @@ license = "GPL-3.0"
 [packages.perl]
 version = "5.40.0"
 description = "Perl 5 high-level, general-purpose, interpreted scripting language"
-url = "https://codeload.github.com/PERL/perl/tar.gz/refs/tags/v5.40.0"
-sha256 = "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed"
-size = "23 MB"
+url = "https://www.cpan.org/src/5.0/perl-5.40.0.tar.gz"
+sha256 = "c740348f357396327a9795d3e8323bafd0fe8a5c7835fc1cbaba0cc8dfe7161f"
+size = "21 MB"
 depends = []
 license = "GPL-1.0-or-later or Artistic-1.0"
 
