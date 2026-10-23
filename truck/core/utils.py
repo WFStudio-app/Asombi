@@ -2,6 +2,7 @@ import os
 import json
 import urllib.request
 import urllib.error
+import urllib.parse
 import hashlib
 import sys
 import time
@@ -54,8 +55,22 @@ def load_installed():
     ensure_dirs()
     if not os.path.exists(INSTALLED_DB):
         return {}
-    with open(INSTALLED_DB) as f:
-        return json.load(f)
+    try:
+        with open(INSTALLED_DB) as f:
+            db = json.load(f)
+        if not isinstance(db, dict):
+            raise ValueError("installed.json is not an object")
+        return db
+    except (ValueError, OSError) as e:
+        # повреждённая БД не должна крашить trk — сохраняем копию и стартуем с нуля
+        err("Corrupted installed.json ({}); starting with empty DB.".format(e))
+        try:
+            backup = INSTALLED_DB + ".corrupt." + str(int(time.time()))
+            os.replace(INSTALLED_DB, backup)
+            warn("Saved corrupted DB to " + backup)
+        except OSError:
+            pass
+        return {}
 
 
 def save_installed(db):
@@ -255,15 +270,15 @@ CRATES_DL = "https://crates.io/api/v1/crates/{}/{}/download"
 
 def crates_lookup(name):
     """Return a Truck-style pkg dict for the latest crates.io version."""
-    data = fetch_json(CRATES_API + "/" + urllib.request.quote(name))
+    data = fetch_json(CRATES_API + "/" + urllib.parse.quote(name))
     if not data or "crate" not in data:
         return None
     cinfo = data["crate"]
     ver = cinfo.get("newest_version") or cinfo.get("max_stable_version")
     if not ver:
         return None
-    vdata = fetch_json("{}/{}/{}".format(CRATES_API, urllib.request.quote(name),
-                                         urllib.request.quote(ver)))
+    vdata = fetch_json("{}/{}/{}".format(CRATES_API, urllib.parse.quote(name),
+                                         urllib.parse.quote(ver)))
     checksum = ""
     size = "unknown"
     if vdata and "version" in vdata:
@@ -278,8 +293,8 @@ def crates_lookup(name):
         "name": slug,
         "version": ver,
         "description": cinfo.get("description") or "Rust crate from crates.io",
-        "url": CRATES_DL.format(urllib.request.quote(name),
-                                urllib.request.quote(ver)),
+        "url": CRATES_DL.format(urllib.parse.quote(name),
+                                urllib.parse.quote(ver)),
         "sha256": checksum,
         "size": size,
         "license": cinfo.get("license") or "unknown",

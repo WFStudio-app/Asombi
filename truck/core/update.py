@@ -1,6 +1,6 @@
 from utils import (
     ok, err, info, warn, c,
-    load_installed, fetch_all_packages
+    load_installed, fetch_all_packages, _ver_key
 )
 from install import _install_one
 
@@ -42,10 +42,19 @@ def cmd_update(args):
                 continue
             pkgs[name] = latest_pkg
         current = installed[name].get("version", "0")
-        latest  = latest_pkg.get("version", "0")
-        if current != latest:
-            updates.append(name)
-            info(f"{name}: {current} -> {latest}")
+        latest = latest_pkg.get("version", "0")
+        if current == latest:
+            continue
+        # Числовое сравнение версий: 0.9 -> 0.10 это АПГРЕЙД,
+        # 1.2.3 -> 1.2.2 — даунгрейд (пропускаем, если не запрошен явно).
+        cur_key, lat_key = _ver_key(current), _ver_key(latest)
+        if lat_key <= cur_key:
+            if args:  # явное указание пакета — разрешаем переустановку
+                updates.append(name)
+                info(f"{name}: {current} -> {latest} (reinstall)")
+            continue
+        updates.append(name)
+        info(f"{name}: {current} -> {latest}")
 
     if not updates:
         ok("All packages are up to date.")

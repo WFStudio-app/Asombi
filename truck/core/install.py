@@ -11,6 +11,21 @@ from utils import (
 )
 
 
+def _is_within_directory(directory, target):
+    """Строгая проверка вложенности без путаницы с префиксом имени.
+
+    '/packages' НЕ является родителем '/packages-sibling': сравниваем
+    commonpath, а не startswith().
+    """
+    try:
+        return os.path.commonpath(
+            [os.path.abspath(directory), os.path.abspath(target)]) \
+            == os.path.abspath(directory)
+    except ValueError:
+        # разные диски / несовместимые пути
+        return False
+
+
 def cmd_install(args):
     no_build = "--no-build" in args
     args = [a for a in args if a != "--no-build"]

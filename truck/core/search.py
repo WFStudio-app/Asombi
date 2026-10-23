@@ -1,4 +1,4 @@
-from utils import err, warn, c, fetch_all_packages, load_installed
+from utils import err, warn, info, c, fetch_all_packages, load_installed
 
 
 def cmd_search(args):
@@ -46,7 +46,7 @@ def crates_io_search(query):
         import urllib.request
         import json as _json
         url = ("https://crates.io/api/v1/crates?page=1&per_page=20"
-               "&q=" + urllib.request.quote(query))
+               "&q=" + urllib.parse.quote(query))
         req = urllib.request.Request(
             url, headers={"User-Agent": "Truck/0.2.00"})
         with urllib.request.urlopen(req, timeout=15) as r:
@@ -59,8 +59,8 @@ def crates_io_search(query):
                 "version": ver,
                 "description": cr.get("description") or "",
                 "url": ("https://crates.io/api/v1/crates/{}/{}/download"
-                        .format(urllib.request.quote(name),
-                                urllib.request.quote(ver))),
+                        .format(urllib.parse.quote(name),
+                                urllib.parse.quote(ver))),
                 "source": "crates.io",
                 "license": cr.get("license") or "unknown",
             }
