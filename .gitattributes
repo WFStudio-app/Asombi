@@ -9,6 +9,12 @@ bin/os text eol=lf
 # Python
 *.py text eol=lf
 
+# TypeScript — явный язык для GitHub linguist (иначе .ts может не попасть в статистику)
+*.ts text eol=lf linguist-language=TypeScript
+*.tsx text eol=lf linguist-language=TypeScript
+*.js text eol=lf linguist-detectable=false
+truck/ts/** linguist-detectable=true
+
 # JSON / YAML
 *.json text eol=lf
 *.yml text eol=lf
