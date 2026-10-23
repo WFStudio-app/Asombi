@@ -115,3 +115,25 @@ sha256 = "250eb79c73d5568c89a3221ae44c43727f817632a065d6c3300b206585b0ab2d"
 size = "1 MB"
 depends = []
 license = "GPL-3.0"
+
+# --- Скриптовые языки ---
+
+[packages.perl]
+version = "5.40.0"
+description = "Perl 5 high-level, general-purpose, interpreted scripting language"
+url = "https://codeload.github.com/PERL/perl/tar.gz/refs/tags/v5.40.0"
+sha256 = "d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed"
+size = "23 MB"
+depends = []
+license = "GPL-1.0-or-later or Artistic-1.0"
+
+# --- Компиляторы и генераторы кода ---
+
+[packages.bison]
+version = "3.8.2"
+description = "General-purpose program for generating parsers (GNU parser generator)"
+url = "https://mirrors.kernel.org/gnu/bison/bison-3.8.2.tar.gz"
+sha256 = "06c9e13bdf7eb24d4ceb6b59205a4f67c2c7e7213119644430fe82fbd14a0abb"
+size = "2.3 MB"
+depends = []
+license = "GPL-3.0"

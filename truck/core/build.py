@@ -12,6 +12,12 @@ Truck — сборка бинарников из исходников, скач�
      curl, wget, git, jq, tmux, htop, nano, zsh и т.п. (configure.ac);
   4. cmake / make   -> CMakeLists.txt или Makefile.in/Makefile.am;
   5. setup.py       -> python3 -m pip install --prefix <pkg>/usr .
+  6. perl           -> Perl-проекты (Build.PL / Makefile.PL):
+                       perl Build.PL && ./Build && ./Build install,
+                       либо perl Makefile.PL && make && make install;
+     для компилируемых пакетов (например Bison) автотools-билд требует
+     генератор парсеров — перед ./configure запускается `bison -d` по
+     *.y/*.yy исходникам, если bison установлен.
 
 Все инструменты проверяются через shutil.which — если компилятора нет,
 выводится понятная подсказка (что поставить), а установка архива при
@@ -47,7 +53,7 @@ def _find_root(src_dir):
     Возвращает директорию, в которой лежат файлы сборки."""
     markers = ("Cargo.toml", "go.mod", "configure", "configure.ac",
                "autogen.sh", "CMakeLists.txt", "Makefile.am",
-               "setup.py", "meson.build")
+               "setup.py", "meson.build", "Build.PL", "Makefile.PL")
     d = src_dir
     for _ in range(3):
         if any(os.path.exists(os.path.join(d, m)) for m in markers):
@@ -129,9 +135,32 @@ def _try_go(src, usr, log, jobs, pkg_name):
             return False
 
 
+def _prebuild_bison(src, log):
+    """Генерирует C/C++-парсеры из Bison-грамматик (*.y / *.yy).
+
+    Вызывается перед ./configure: git-tarball'ы часто не содержат
+    готовых parser.c/parser.h. Если bison не установлен — молча
+    пропускаем (make всё равно может найти готовые .c в архиве).
+    Возвращает число сгенерированных файлов.
+    """
+    if not shutil.which("bison"):
+        return 0
+    generated = 0
+    for root, dirs, files in os.walk(src):
+        dirs[:] = [d for d in dirs if d not in ("_asombi_build", ".git")]
+        for f in files:
+            if f.endswith((".y", ".yy")):
+                if _run(["bison", "-d", f], root, log):
+                    generated += 1
+    return generated
+
+
 def _try_autotools(src, usr, log, jobs):
     if not (shutil.which("make") and shutil.which("cc")):
         return None
+    # Bison-грамматики (*.y/*.yy): из git-tarball'ов .c-парсеры не поставлены —
+    # генерируем их до ./configure, если bison доступен в системе.
+    _prebuild_bison(src, log)
     conf = os.path.join(src, "configure")
     # tarball'ы релизов обычно содержат готовый configure; git-теги — нет,
     # тогда генерируем его autoreconf'ом.
@@ -209,6 +238,39 @@ def _try_python(src, usr, log, jobs):
                  "--install-scripts=" + os.path.join(usr, "bin")], src, log)
 
 
+def _try_perl(src, usr, log, jobs):
+    """Perl-модули: Module::Build (Build.PL) или ExtUtils::MakeMaker (Makefile.PL)."""
+    perl = shutil.which("perl")
+    if not perl:
+        return None
+    bindir = os.path.join(usr, "bin")
+    libdir = os.path.join(usr, "lib", "perl5", "site_perl")
+    os.makedirs(bindir, exist_ok=True)
+    os.makedirs(libdir, exist_ok=True)
+    # 1) Module::Build
+    if os.path.exists(os.path.join(src, "Build.PL")):
+        if not _run([perl, "Build.PL", "--install_base=" + usr], src, log):
+            return False
+        build = os.path.join(src, "Build")
+        if not os.path.exists(build):
+            return False
+        if not _run([build, "build"], src, log):
+            return False
+        return _run([build, "install"], src, log)
+    # 2) ExtUtils::MakeMaker
+    if os.path.exists(os.path.join(src, "Makefile.PL")):
+        if not _run([perl, "Makefile.PL",
+                     "INSTALLSITESCRIPT=" + bindir,
+                     "INSTALLSITEARCH=" + libdir,
+                     "INSTALLBIN=" + bindir,
+                     "INSTALLDIRS=site"], src, log):
+            return False
+        if not _run(["make", "-j" + str(jobs)], src, log):
+            return False
+        return _run(["make", "install"], src, log)
+    return None
+
+
 def _detect_system(src):
     if os.path.exists(os.path.join(src, "Cargo.toml")):
         return "cargo"
@@ -225,6 +287,9 @@ def _detect_system(src):
     if os.path.exists(os.path.join(src, "setup.py")) or os.path.exists(
             os.path.join(src, "pyproject.toml")):
         return "python"
+    if os.path.exists(os.path.join(src, "Build.PL")) or os.path.exists(
+            os.path.join(src, "Makefile.PL")):
+        return "perl"
     if os.path.exists(os.path.join(src, "Makefile")) or os.path.exists(
             os.path.join(src, "Makefile.in")) or os.path.exists(
             os.path.join(src, "Makefile.am")):
@@ -239,7 +304,11 @@ HINTS = {
     "cmake": "CMake package: apt install cmake build-essential",
     "meson": "Meson package: apt install meson ninja-build gcc",
     "python": "Python package: apt install python3 python3-pip",
+    "perl": "Perl package: apt install perl perl-base (Termux: pkg install perl)",
     "make": "Makefile package: apt install build-essential",
+    # Bison — генератор парсеров: нужен при сборке C-пакетов из git-tarball'ов
+    # с грамматиками *.y/*.yy (например сам GNU Bison, jq, bash и т.п.)
+    "bison": "Bison grammar detected: apt install bison (Termux: pkg install bison)",
 }
 
 
@@ -269,12 +338,19 @@ def build_package(name, install_dir):
         "meson": lambda: _try_meson(src, usr, log, jobs),
         "make": lambda: _try_make(src, usr, log, jobs),
         "python": lambda: _try_python(src, usr, log, jobs),
+        "perl": lambda: _try_perl(src, usr, log, jobs),
     }
 
     info(f"Building binaries ({system})... this may take a while")
     result = dispatch[system]()
     if result is None:
         warn(HINTS.get(system, "No builder available for " + system))
+        # C-пакет с Bison-грамматиками без bison — отдельная подсказка
+        if system in ("autotools", "make", "cmake") and not shutil.which("bison"):
+            grammars = [f for _, _, fs in os.walk(src) for f in fs
+                        if f.endswith((".y", ".yy"))]
+            if grammars:
+                warn(HINTS["bison"])
         warn("Toolchain missing — sources kept at: " + install_dir)
         warn("Build manually, then run: trk link " + name)
         return []

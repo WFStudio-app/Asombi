@@ -1,6 +1,8 @@
 ## [Unreleased]
 
 ### Added
+- **Perl в Truck**: новая билд-система `perl` в `truck/core/build.py` — распознаёт `Build.PL` (Module::Build) и `Makefile.PL` (ExtUtils::MakeMaker), ставит бинарники/модули в `<pkg>/usr` и линкует в PATH; пакет `perl` 5.40.0 добавлен в `packages/index.toml`
+- **Bison как компилятор/генератор парсеров**: `_prebuild_bison()` автоматически генерирует `*.y`/`*.yy` → `.c/.h` (`bison -d`) перед `./configure` для C-пакетов; подсказка установки bison при его отсутствии; пакет `bison` 3.8.2 добавлен в `packages/index.toml`
 - **Truck TypeScript-модуль** (`truck/ts`, пакет `@asombi/truck-index`): порт индекс-ядра utils.py (парсер TOML, versionKey/selectVersion, crates.io fallback, поиск) + CLI `trk-ts` (search/info/versions/stats); 10 unit-тестов, эквивалентность Python-ядру проверена кросс-запуском на живом индексе AsomPacket
 - **docs/truck-migration.md** — аудит модулей Truck и план замены устаревших частей на C++/Rust/TypeScript
 - **AsomPacket** — отдельный репозиторий пакетов для Truck (`github.com/WFStudio-app/AsomPacket`):

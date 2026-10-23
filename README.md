@@ -147,6 +147,10 @@ Asombi OS
 
 Current: **0.2.00**
 
+Package registry highlights — scripting languages (`python3`, `perl`) and
+compiler toolchain / parser generators (`gcc` via autotools builds, `bison`)
+are available through `trk install <name>`.
+
 ---
 
 ## Documentation
