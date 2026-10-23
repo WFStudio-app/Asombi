@@ -23,11 +23,26 @@ def cmd_update(args):
         if name not in installed:
             warn(f"'{name}' not installed, skipping.")
             continue
-        if name not in pkgs:
-            warn(f"'{name}' not found in repos, skipping.")
-            continue
+        latest_pkg = None
+        # 1) точная секция (Asombi index), 2) выбор максимальной версии из
+        # индексов вида "<name>-<ver>", 3) crates.io fallback
+        if name in pkgs:
+            latest_pkg = pkgs[name]
+        else:
+            from utils import select_version
+            _slug, sel = select_version(pkgs, name)
+            if sel is not None:
+                latest_pkg = sel
+                pkgs[name] = sel
+        if latest_pkg is None:
+            from utils import resolve_package
+            latest_pkg, _fc = resolve_package(name, pkgs)
+            if latest_pkg is None:
+                warn(f"'{name}' not found in repos or crates.io, skipping.")
+                continue
+            pkgs[name] = latest_pkg
         current = installed[name].get("version", "0")
-        latest  = pkgs[name].get("version", "0")
+        latest  = latest_pkg.get("version", "0")
         if current != latest:
             updates.append(name)
             info(f"{name}: {current} -> {latest}")

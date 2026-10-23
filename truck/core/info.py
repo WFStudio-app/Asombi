@@ -3,15 +3,17 @@ from utils import err, c, fetch_all_packages, load_installed, resolve_package
 
 def cmd_info(args):
     if not args:
-        err("Usage: trk info <package>")
+        err("Usage: trk info <package[@version]>")
         return
 
     name = args[0]
+    _, _, want_ver = name.partition("@")
+    name = name.split("@")[0]
     pkgs = fetch_all_packages()
     installed = load_installed()
 
     # Fallback: если не найдено в репозиториях — спрашиваем crates.io
-    pkg, from_crates = resolve_package(name, pkgs)
+    pkg, from_crates = resolve_package(name, pkgs, want_ver or None)
     if not pkg:
         err(f"Package '{name}' not found (repositories or crates.io).")
         return

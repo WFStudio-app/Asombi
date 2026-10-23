@@ -287,9 +287,63 @@ def crates_lookup(name):
     }
 
 
-def resolve_package(name, pkgs):
+def _ver_key(v):
+    """Сортировка версий: первые числовые части сегментов (0.24.0 > 0.9.0)."""
+    parts = []
+    for p in str(v).split(".")[:4]:
+        num = ""
+        for ch in p:
+            if ch.isdigit():
+                num += ch
+            else:
+                break
+        parts.append(int(num) if num else -1)
+    return parts
+
+
+def select_version(pkgs, name, version=None):
+    """Выбор версии пакета из словаря индекса.
+
+    Индексы бывают двух форматов: "голые" секции [packages.curl] (Asombi)
+    и версионные [packages.curl-8.9.1] (AsomPacket). Порядок: явная версия
+    "name-<version>" -> максимальная среди "<name>-*" -> точное имя.
+    Сравниваются оба формата, выбирается более свежая версия.
+    Возвращает (slug, pkg) или (None, None).
+    """
+    best_key = None   # (slug, pkg)
+    best_ver = None
+    # 1. Точное совпадение (Asombi index: [packages.curl])
+    if name in pkgs:
+        best_key = (name, pkgs[name])
+        best_ver = _ver_key(pkgs[name].get("version", ""))
+    # 2. Явная версия: curl@8.9.1 -> slug "curl-8.9.1"
+    if version:
+        slug = "{}-{}".format(name, version)
+        if slug in pkgs:
+            return slug, pkgs[slug]
+        cands = [(k, v) for k, v in pkgs.items()
+                 if k.startswith(slug + "-")]  # коллизии вида 8.9.1-2
+        if cands:
+            return max(cands, key=lambda kv: _ver_key(kv[1].get("version", "")))
+        return None, None
+    # 3. Все версии пакета: максимум среди "<name>-*"
+    pref = name + "-"
+    cands = {k: v for k, v in pkgs.items()
+             if k.startswith(pref) and v.get("name") == name}
+    if not cands:
+        cands = {k: v for k, v in pkgs.items() if k.startswith(pref)}
+    for k, v in cands.items():
+        vk = _ver_key(v.get("version", ""))
+        if best_ver is None or vk > best_ver:
+            best_key, best_ver = (k, v), vk
+    if best_key:
+        return best_key
+    return None, None
+
+
+def resolve_package(name, pkgs, version=None):
     """Look up a package in fetched indexes; fall back to crates.io."""
-    pkg = pkgs.get(name)
+    slug, pkg = select_version(pkgs, name, version)
     if pkg:
         return pkg, False
     info("Not found in repositories, checking crates.io...")

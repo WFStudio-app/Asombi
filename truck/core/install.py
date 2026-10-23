@@ -13,7 +13,7 @@ from utils import (
 
 def cmd_install(args):
     if not args:
-        err("Usage: trk install <package> [package2 ...]")
+        err("Usage: trk install <package>[@version] [package2 ...]")
         return
 
     pkgs = fetch_all_packages()
@@ -22,23 +22,28 @@ def cmd_install(args):
         return
 
     installed = load_installed()
-    for name in args:
-        _install_one(name, pkgs, installed)
+    for spec in args:
+        name, _, want_ver = spec.partition("@")
+        _install_one(name, pkgs, installed, want_ver or None)
 
 
-def _install_one(name, pkgs, installed):
+def _install_one(name, pkgs, installed, want_version=None):
     print(f"\n{c('bold', 'Package:')} {c('cyan', name)}")
 
     # Ищем в подключённых репозиториях (AsomPacket и др.),
     # при отсутствии — fallback на crates.io.
+    # Индексы хранят версии как секции "<имя>-<версия>", поэтому
+    # без явной версии выбирается максимальная.
     from_crates = False
-    pkg = pkgs.get(name)
+    pkg = None
+    if name in pkgs and (not want_version or pkgs[name].get("version") == want_version):
+        pkg = pkgs[name]
     if pkg is None:
-        pkg, from_crates = resolve_package(name, pkgs)
+        pkg, from_crates = resolve_package(name, pkgs, want_version)
         if pkg is None:
             err(f"Package '{name}' not found in any repository or on crates.io.")
             return
-        pkgs[name] = pkg
+        pkgs.setdefault(name, pkg)
 
     version = pkg.get("version", "?")
 
@@ -60,6 +65,9 @@ def _install_one(name, pkgs, installed):
             if dep not in installed:
                 info(f"Installing dependency: {dep}")
                 _install_one(dep, pkgs, installed)
+                # если рекурсия не установила (нет в индексе/ошибка) — не блокируем
+                if dep not in load_installed():
+                    warn(f"Dependency '{dep}' could not be installed; continuing with '{name}'.")
                 installed.update(load_installed())
 
     url = pkg.get("url", "")
@@ -95,6 +103,9 @@ def _install_one(name, pkgs, installed):
 
     # Путь установки теперь строго внутри ASOMBI_ROOT/packages/
     install_dir = os.path.join(PACKAGES_DIR, name)
+    # чистим старые файлы при upgrade/reinstall (иначе tar-перекрывает не всё)
+    if os.path.isdir(install_dir):
+        shutil.rmtree(install_dir)
     os.makedirs(install_dir, exist_ok=True)
 
     info("Extracting...")
