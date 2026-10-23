@@ -104,6 +104,15 @@ trk list                # List installed
 trk info    <package>   # Package info
 trk repo add <url>      # Add repository
 trk clean               # Clear cache
+
+mypm <command>          # Alias of trk (see: man mypm)
+```
+
+The full **mypm** reference is available as a classic Roff man page:
+
+```bash
+man mypm                # after install.sh, or:
+nroff -man man/mypm.1   # straight from the repo
 ```
 
 ---

@@ -154,6 +154,20 @@ for CMD in os trk; do
     ok "Command registered: ${CMD}"
 done
 
+# ── mypm — псевдоним trk (см. man/mypm.1) ────────────────────────
+if [ -f "${BIN_DIR}/trk" ]; then
+    printf '#!/bin/sh\nexec "%s/trk" "$@"\n' "${BIN_DIR}" > "${BIN_DIR}/mypm"
+    chmod 755 "${BIN_DIR}/mypm"
+    ok "Command registered: mypm (alias of trk)"
+fi
+
+# ── man-страница mypm(1) в формате Roff ──────────────────────────
+if [ -f "${ASOMBI_DIR}/man/mypm.1" ] && [ -d "${PREFIX}/share/man/man1" ]; then
+    install -m 644 "${ASOMBI_DIR}/man/mypm.1" "${PREFIX}/share/man/man1/mypm.1" 2>/dev/null \
+        && ok "Man page installed: man mypm" \
+        || warn "Could not install man page (permissions?)"
+fi
+
 # ── PATH для собранных бинарников Truck (~/.asombi/bin) ─────────
 # trk build-системы (cargo/go/autotools) кладут симлинки бинарников
 # в ~/.asombi/bin — добавляем его в PATH, если его там ещё нет.

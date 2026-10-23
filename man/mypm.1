@@ -1,0 +1,168 @@
+.\"  mypm.1 - manual page for mypm (Truck package manager, trk)
+.\"  Part of Asombi OS <https://github.com/WFStudio-app/Asombi>
+.\"
+.TH MYPN 1 "mypm" "October 2026" "Asombi OS 0.2.00" "Asombi OS User Manuals"
+.SH NAME
+mypm \- package manager for Asombi OS (alias of
+.BR trk ,
+the Truck Package Manager)
+.ad left
+.hy 0
+.nh
+.SH SYNOPSIS
+.B mypm
+.I command
+.RI [ options ]
+.RI [ arguments ...]
+.SH DESCRIPTION
+.B mypm
+is the package-management front-end of Asombi OS. It installs, removes,
+updates and audits binary packages built from sources into lightweight
+Alpine-based instances. The command set is identical to
+.BR trk (1);
+.B mypm
+exists as a convenience alias so users can type their package manager in
+their own words.
+.PP
+Packages are described by TOML manifests and resolved from one or more
+repositories (see
+.BR mypm\ repo ).
+Installation compiles binaries inside the instance rootfs and links them
+into PATH unless
+.B \-\-no-build
+is given.
+.SH COMMANDS
+.TP
+.BI "install " "package[@version] [package2 ...] [\-\-no\-build]"
+Install one or more packages. Append
+.B @version
+to pin a specific release. With
+.B \-\-no\-build
+only fetch metadata and skip compilation.
+.TP
+.BI "remove " package
+Remove an installed package and unlink its binaries from PATH.
+.TP
+.BI "update " [package]
+Update the given package, or every installed package when no argument
+is supplied.
+.TP
+.BI "search " query
+Search all configured repositories for packages matching
+.IR query .
+Installed packages are marked with
+.BR [installed] .
+.TP
+.B list
+List installed packages together with their versions.
+.TP
+.BI "info " package
+Show detailed information about a package: version, description,
+dependencies, source URL and install state.
+.TP
+.BI "link " package
+Re-link the built binaries of an already installed package into PATH
+(useful after a manual cleanup).
+.TP
+.BI "repo add " url
+Register an additional package repository.
+.TP
+.BI "repo remove " url
+Deregister a repository.
+.TP
+.BI "repo list"
+List all configured repositories.
+.TP
+.B clean
+Clear the download and build cache.
+.TP
+.B version
+Print the Truck/mypm version and exit.
+.TP
+.BR "help" , "\ " "-h" , "\ " "--help"
+Show the usage banner with the command summary.
+.SH OPTIONS
+.TP
+.B \-\-no\-build
+Valid for
+.BR install ;
+skip source compilation and only register the package.
+.TP
+.B @version
+Version-pin syntax valid for
+.B install
+and
+.BR info .
+.SH FILES
+.TP
+.B ~/.asombi/instances/
+Instance root directories containing per-instance package databases.
+.TP
+.B ~/.asombi/packages/
+Shared package database (installed-package records).
+.TP
+.B ~/.asombi/cache/
+Download and build cache managed by
+.BR "mypm clean" .
+.TP
+.B ~/.asombi/logs/
+Build logs for failed compilations.
+.SH EXAMPLES
+Install ripgrep, compiling from source:
+.PP
+.EX
+$ mypm install ripgrep
+.EE
+.PP
+Install a pinned version without building:
+.PP
+.EX
+$ mypm install neovim@0.9.5 --no-build
+.EE
+.PP
+Add a community repository and search it:
+.PP
+.EX
+$ mypm repo add https://example.com/repo/index.toml
+$ mypm search editor
+.EE
+.PP
+Update everything and clean up afterwards:
+.PP
+.EX
+$ mypm update
+$ mypm clean
+.EE
+.SH DIAGNOSTICS
+On unknown commands
+.B mypm
+prints
+.RB "[trk]\ Unknown\ command:\ ..."
+and exits with status
+.BR 1 .
+If the truck core directory is missing from the installation, it exits
+with a hint to re-run
+.BR install.sh .
+Exit status
+.B 0
+indicates success.
+.SH "EXIT STATUS"
+.nf
+.B 0
+success
+.B 1
+invalid usage, unknown command or failed operation
+.fi
+.SH "SEE ALSO"
+.BR trk (1),
+.BR os (1),
+Asombi OS documentation under
+.I docs/
+in the project repository.
+.SH AUTHOR
+Written by WF Studio for Asombi OS.
+.SH REPORTING BUGS
+Report bugs at
+.LK
+https://github.com/WFStudio-app/Asombi/issues
+.UNL

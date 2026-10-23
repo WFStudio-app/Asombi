@@ -15,7 +15,7 @@ echo "  Asombi OS - Uninstaller"
 echo ""
 
 # БАГ 4 ФИКС: удаляем os и trk (было: os и wiz — неверно)
-for cmd in os trk; do
+for cmd in os trk mypm; do
     TARGET="${BIN_DIR}/${cmd}"
     if [ -L "${TARGET}" ]; then
         LINK_DEST=$(readlink "${TARGET}")

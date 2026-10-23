@@ -29,3 +29,6 @@ truck/ts/** linguist-detectable=true
 *.zip binary
 *.png binary
 *.jpg binary
+
+# Roff man pages
+*.1 text eol=lf linguist-detectable=false
