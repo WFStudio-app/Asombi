@@ -58,9 +58,9 @@ def crates_io_search(query):
                 "name": name,
                 "version": ver,
                 "description": cr.get("description") or "",
-                "url": ("https://crates.io/api/v1/crates/{}/{}"
+                "url": ("https://crates.io/api/v1/crates/{}/{}/download"
                         .format(urllib.request.quote(name),
-                               urllib.request.quote(ver))),
+                                urllib.request.quote(ver))),
                 "source": "crates.io",
                 "license": cr.get("license") or "unknown",
             }

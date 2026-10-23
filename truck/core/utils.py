@@ -249,7 +249,8 @@ def fetch_all_packages(force=False):
 # ---------------------------------------------------------------------------
 
 CRATES_API = "https://crates.io/api/v1/crates"
-CRATES_DL = "https://crates.io/api/v1/crates/{}/{}"
+# Скачивание .crate tarball — только через /download (иначе API отдаёт JSON)
+CRATES_DL = "https://crates.io/api/v1/crates/{}/{}/download"
 
 
 def crates_lookup(name):
@@ -266,7 +267,9 @@ def crates_lookup(name):
     checksum = ""
     size = "unknown"
     if vdata and "version" in vdata:
-        checksum = vdata["version"].get("checksum", "")
+        # crates.io отдаёт checksum в base16; приводим к нижнему регистру,
+        # сверка sha256 в install.py работает с hex-строкой
+        checksum = (vdata["version"].get("checksum") or "").lower()
         bytes_ = vdata["version"].get("crate_size")
         if bytes_:
             size = "{} KB".format(round(bytes_ / 1024, 1))
