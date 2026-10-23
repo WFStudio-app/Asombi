@@ -154,6 +154,23 @@ for CMD in os trk; do
     ok "Command registered: ${CMD}"
 done
 
+# ── PATH для собранных бинарников Truck (~/.asombi/bin) ─────────
+# trk build-системы (cargo/go/autotools) кладут симлинки бинарников
+# в ~/.asombi/bin — добавляем его в PATH, если его там ещё нет.
+ASOMBI_BIN="${INSTALL_DIR}/bin"
+mkdir -p "${ASOMBI_BIN}"
+PROFILE="${PREFIX}/etc/profile.d/asombi-bin.sh"
+if [ -d "${PREFIX}/etc/profile.d" ]; then
+    printf 'export PATH="%s:$PATH"\n' "${ASOMBI_BIN}" > "${PROFILE}" 2>/dev/null \
+        && ok "PATH hook installed (new shells will find built binaries)"
+else
+    # fallback: ~/.bashrc (Termux)
+    if ! grep -q "asombi/bin" "${HOME}/.bashrc" 2>/dev/null; then
+        printf '\nexport PATH="%s:$PATH"\n' "${ASOMBI_BIN}" >> "${HOME}/.bashrc" \
+            && ok "PATH hook added to ~/.bashrc"
+    fi
+fi
+
 echo ""
 ok "Asombi OS installed!"
 echo ""

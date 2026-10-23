@@ -12,8 +12,10 @@ from utils import (
 
 
 def cmd_install(args):
+    no_build = "--no-build" in args
+    args = [a for a in args if a != "--no-build"]
     if not args:
-        err("Usage: trk install <package>[@version] [package2 ...]")
+        err("Usage: trk install <package>[@version] [package2 ...] [--no-build]")
         return
 
     pkgs = fetch_all_packages()
@@ -24,10 +26,11 @@ def cmd_install(args):
     installed = load_installed()
     for spec in args:
         name, _, want_ver = spec.partition("@")
-        _install_one(name, pkgs, installed, want_ver or None)
+        _install_one(name, pkgs, installed, want_ver or None,
+                     no_build=no_build)
 
 
-def _install_one(name, pkgs, installed, want_version=None):
+def _install_one(name, pkgs, installed, want_version=None, no_build=False):
     print(f"\n{c('bold', 'Package:')} {c('cyan', name)}")
 
     # Ищем в подключённых репозиториях (AsomPacket и др.),
@@ -101,6 +104,27 @@ def _install_one(name, pkgs, installed, want_version=None):
             return
         ok("Checksum verified")
 
+    # Определяем реальный тип архива по magic bytes: URL-окончание
+    # не всегда содержит расширение (codeload tar.gz отдаётся как ".../3.3.0").
+    with open(cache_path, "rb") as f:
+        magic = f.read(4)
+    ext = ""
+    if magic[:2] == b"\x1f\x8b":
+        ext = ".tar.gz"          # gzip (включая .crate)
+    elif magic[:6] in (b"\xfd7zXZ", b"ustar\x00"):
+        ext = ".tar"
+    elif magic[:3] == b"BZh":
+        ext = ".tar.bz2"
+    elif magic[:6] == b"PK\x03\x04":
+        ext = ".zip"
+    if ext and not filename.endswith(ext) and not filename.endswith(".crate"):
+        real_name = filename + ext
+        real_path = os.path.join(CACHE_DIR, real_name)
+        if os.path.exists(real_path):
+            os.remove(real_path)
+        os.rename(cache_path, real_path)
+        cache_path, filename = real_path, real_name
+
     # Путь установки теперь строго внутри ASOMBI_ROOT/packages/
     install_dir = os.path.join(PACKAGES_DIR, name)
     # чистим старые файлы при upgrade/reinstall (иначе tar-перекрывает не всё)
@@ -110,7 +134,11 @@ def _install_one(name, pkgs, installed, want_version=None):
 
     info("Extracting...")
     try:
-        if filename.endswith((".tar.gz", ".tgz", ".tar.xz", ".tar.bz2", ".crate")):
+        is_archive = filename.endswith((".tar.gz", ".tgz", ".tar.xz", ".tar.bz2",
+                                        ".crate", ".tar")) or \
+            (magic[:2] == b"\x1f\x8b" and not ext)
+        if is_archive:
+            # tarfile сам разберёт gzip/bzip2/xz по содержимому
             with tarfile.open(cache_path) as tar:
                 safe = []
                 for m in tar.getmembers():
@@ -146,11 +174,25 @@ def _install_one(name, pkgs, installed, want_version=None):
         else:
             warn(f"post_install script not found or unsafe: {post}")
 
+    # Сборка бинарников из исходников (AsomPacket отдаёт upstream tarball'ы).
+    # Ошибка сборки НЕ отменяет установку — исходники остаются в packages/.
+    binaries = []
+    if not no_build:
+        try:
+            from build import build_package
+            binaries = build_package(name, install_dir) or []
+        except Exception as e:
+            warn(f"Build step skipped: {e}")
+
     installed[name] = {
         "version": version,
         "install_dir": install_dir,
         "url": url,
         "description": pkg.get("description", ""),
+        "binaries": binaries,
     }
     save_installed(installed)
     ok(f"'{name}' installed successfully (v{version})")
+    if binaries:
+        from paths import BIN_DIR
+        ok(f"Binaries ready in PATH: {' '.join(binaries)}  ({BIN_DIR})")

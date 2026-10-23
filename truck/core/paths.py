@@ -25,6 +25,8 @@ ASOMBI_ROOT   = os.path.expanduser("~/.asombi")
 
 # Системные директории
 SYSTEM_DIR    = os.path.join(ASOMBI_ROOT, "system")
+# Сюда линкуются бинарники установленных пакетов (должен быть в PATH)
+BIN_DIR       = os.path.join(ASOMBI_ROOT, "bin")
 INSTANCES_DIR = os.path.join(ASOMBI_ROOT, "instances")
 PACKAGES_DIR  = os.path.join(ASOMBI_ROOT, "packages")
 CACHE_DIR     = os.path.join(ASOMBI_ROOT, "cache")
@@ -54,6 +56,7 @@ def ensure_dirs():
     dirs = [
         ASOMBI_ROOT,
         SYSTEM_DIR,
+        BIN_DIR,
         INSTANCES_DIR,
         PACKAGES_DIR,
         CACHE_DIR,

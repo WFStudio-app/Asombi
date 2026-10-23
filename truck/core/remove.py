@@ -1,8 +1,24 @@
 import os
 import shutil
 
-from paths import PACKAGES_DIR
+from paths import PACKAGES_DIR, BIN_DIR
 from utils import ok, err, warn, load_installed, save_installed
+
+
+def _unlink_binaries(name, entry):
+    """Удаляет симлинки пакета из ~/.asombi/bin (только ведущие в packages/)."""
+    removed = []
+    for bname in entry.get("binaries", []):
+        dst = os.path.join(BIN_DIR, bname)
+        if os.path.islink(dst):
+            target = os.path.realpath(dst)
+            if target.startswith(os.path.realpath(PACKAGES_DIR)):
+                try:
+                    os.remove(dst)
+                    removed.append(bname)
+                except OSError:
+                    pass
+    return removed
 
 
 def cmd_remove(args):
@@ -18,6 +34,11 @@ def cmd_remove(args):
             continue
 
         install_dir = installed[name].get("install_dir", "")
+
+        # сначала убираем симлинки бинарников из PATH
+        gone = _unlink_binaries(name, installed[name])
+        if gone:
+            ok(f"Unlinked from PATH: {', '.join(gone)}")
 
         # Проверяем что путь реально внутри PACKAGES_DIR (защита)
         if install_dir:

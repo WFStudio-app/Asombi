@@ -26,12 +26,14 @@ HELP = f"""
   Truck Package Manager for Asombi OS  v{VERSION}
 
 Usage:
-  trk install <package>     Install a package
-  trk remove  <package>     Remove a package
+  trk install <package>     Install a package (builds binaries from sources;
+                            add --no-build to skip compiling)
+  trk remove  <package>     Remove a package (also unlinks its binaries)
   trk update  [package]     Update package(s)
   trk search  <query>       Search for packages
   trk list                  List installed packages
   trk info    <package>     Show package info
+  trk link    <package>     Link built binaries of an installed package into PATH
   trk repo    add <url>     Add a repository
   trk repo    remove <url>  Remove a repository
   trk repo    list          List repositories
@@ -72,6 +74,9 @@ def main():
     elif cmd == "info":
         from info import cmd_info
         cmd_info(rest)
+    elif cmd == "link":
+        from build import cmd_link
+        cmd_link(rest)
     elif cmd == "repo":
         from repo import cmd_repo
         cmd_repo(rest)
