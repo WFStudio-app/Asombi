@@ -11,7 +11,7 @@ import urllib.request
 import shutil
 import socket
 
-VERSION = "0.2.00"
+VERSION = "0.2.13"
 
 _REAL_FILE = os.path.realpath(__file__)
 _BIN_DIR   = os.path.dirname(_REAL_FILE)
